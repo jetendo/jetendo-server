@@ -353,6 +353,17 @@ Install lucee
 		Don't allow installation of apache connectors: n
 		Remember to write down password for Tomcat/lucee administrator.
 		
+		Edit /etc/init.d/lucee_ctl 
+			Before echo "[DONE]" in the start function add these lines where company domain is one of the main domain setup in jetendo for the server administrator.
+				printf "\nLoading Jetendo Application\n"
+				/usr/bin/wget -O- 'http://dev.127.0.0.2.nip.io:8888/zcorerootmapping/index.cfm?_zsa3_path=/&zcoreRunFirstInit=1'
+				printf "\n[DONE]"
+			
+		# prevent lucee from starting on boot (requires that jetendo-start.php init script is installed and configured - documentation is incomplete for this)
+		echo manual | sudo tee /etc/init/lucee_ctl.override
+		
+		This forces the request that loads jetendo to occur on each restart of Lucee.
+		
 	/var/jetendo-server/lucee/tomcat/bin/setenv.sh
 	# adjust Xmx high as you can afford, but at least 512m is necessary
 		CATALINA_OPTS="-server -Dsun.io.useCanonCaches=false -Xms512m -Xmx1024m -javaagent:lib/lucee-inst.jar  -Djava.library.path=/usr/local/apr/lib -XX:+OptimizeStringConcat -XX:+UseTLAB -XX:+UseBiasedLocking -Xverify:none -XX:+UseThreadPriorities  -XX:+UseFastAccessorMethods -XX:-UseLargePages -XX:+UseCompressedOops";

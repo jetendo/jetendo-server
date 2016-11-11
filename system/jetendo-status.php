@@ -15,7 +15,7 @@ if($jetendoAdminDomain==""){
 		echo "1";
 	}
 }else{
-	$verifyURL=$jetendoAdminDomain.":8888/zcorerootmapping/index.cfm?_zsa3_path=/";
+	$verifyURL=$jetendoAdminDomain.":8888/zcorerootmapping/index.cfm?_zsa3_path=/&zcoreRunFirstInit=1";
 	if($allowOutput){
 		echo "Running URL to check jetendo status:\n".$verifyURL."\nPlease wait...\n";
 	}

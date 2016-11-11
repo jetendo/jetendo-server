@@ -22,7 +22,7 @@
   /sys/devices/system/cpu/ r,
   /tmp/hsperfdata_www-data/ rw,
   /tmp/hsperfdata_www-data/** rw,
-  /var/www/.oracle_jre_usage/ a,
+  /var/www/.oracle_jre_usage/ w,
   /tmp/.java_pid* w,
   /usr/lib{,32,64}/** mr,
   /usr/local/apr/lib/lib*so* mr,

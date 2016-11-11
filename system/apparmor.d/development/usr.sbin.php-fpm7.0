@@ -4,7 +4,8 @@
 /usr/sbin/php-fpm7.0 {
   #include <abstractions/base>
   #include <abstractions/nameservice>
-
+	
+  capability net_admin,
   capability kill,
   capability setgid,
   capability setuid,
@@ -13,7 +14,8 @@
   capability dac_read_search,
   /bin/dash rix,
   /var/jetendo-server/jetendo/sites-writable/*/client-upload/** rw,
- 
+  
+  /etc/ssl/openssl.cnf r,
   /etc/mailname r,
   /etc/postfix/dynamicmaps.cf r,
   /usr/sbin/postdrop rix,

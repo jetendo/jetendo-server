@@ -43,5 +43,6 @@
     /run/nginx.pid rw,
     /run/nginx.pid.oldbin w,
     /run/php/php7.0-fpm.sock rw,
+    /var/run/php/php7.0-fpm.sock rw,
   
 }
