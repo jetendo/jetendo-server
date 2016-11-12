@@ -352,7 +352,6 @@ if(array_key_exists("apache", $arrServiceMap)){
 
 // force cron to work earlier
 `/var/jetendo-server/jetendo/scripts/execute-commands.php >/dev/null 2>&1 &`;
-`/usr/bin/php /var/jetendo-server/jetendo/scripts/newsite.php >/dev/null 2>&1 &`;
 //`/var/jetendo-server/jetendo/scripts/zqueue/queue.php >/dev/null 2>&1 &`;
 //`/var/jetendo-server/jetendo/scripts/zqueue/queue-check-running.php >/dev/null 2>&1 &`;
 /*

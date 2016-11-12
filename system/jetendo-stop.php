@@ -9,6 +9,7 @@ if($isHostServer){
 	stopHost($arrVirtualMachine);
 }
 // stop lucee with the memory dump request
+/*
 if(array_key_exists("lucee", $arrServiceMap) && $memoryDumpURL != ""){
 	echo "Dumping lucee application scope:\n";
 	// might want to use curl or wget with timeout instead.
@@ -19,6 +20,7 @@ if(array_key_exists("lucee", $arrServiceMap) && $memoryDumpURL != ""){
 		echo $result;
 	}
 }
+*/
 /*
 // stop railo with the memory dump request
 if(array_key_exists("railo", $arrServiceMap) && $memoryDumpURL != ""){
