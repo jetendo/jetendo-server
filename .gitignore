@@ -20,6 +20,8 @@ php/fpm-pool-conf/*
 php/run/*
 php/temp/*
 php/session/*
+system/monit/jetendo-development.conf
+system/monit/jetendo-production.conf
 system/php/jetendo.ini
 system/coldfusion/install/*
 railovhosts

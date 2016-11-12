@@ -516,19 +516,22 @@ Enable the php configuration module:
 	ln -sfn /var/jetendo-server/system/jetendo-mysql-development.cnf /etc/mysql/conf.d/jetendo-mysql-development.cnf 
 	ln -sfn /var/jetendo-server/system/nginx-conf/nginx-development.conf /var/jetendo-server/nginx/conf/nginx.conf
 	ln -sfn /var/jetendo-server/system/jetendo-sysctl-development.conf /etc/sysctl.d/jetendo-sysctl-development.conf
-	ln -sfn /var/jetendo-server/system/monit/jetendo.conf /etc/monit/conf.d/jetendo.conf
+	ln -sfn /var/jetendo-server/system/monit/jetendo-development.conf /etc/monit/conf.d/jetendo.conf
 	ln -sfn /var/jetendo-server/system/apache-conf/development-sites-enabled /etc/apache2/sites-enabled
 	ln -sfn /var/jetendo-server/system/php/development-pool /etc/php/7.0/fpm/pool.d
-	
-	
+		
+	replace sa.your-company.com 3 times in /var/jetendo-server/system/monit/jetendo-development.conf with the jetendo server manager domain and change to https if you are using https 
 	
 # production server symbolic link configuration
 	ln -sfn /var/jetendo-server/system/jetendo-mysql-production.cnf /etc/mysql/conf.d/jetendo-mysql-production.cnf
 	ln -sfn /var/jetendo-server/system/nginx-conf/nginx-production.conf /var/jetendo-server/nginx/conf/nginx.conf
 	ln -sfn /var/jetendo-server/system/jetendo-sysctl-production.conf /etc/sysctl.d/jetendo-sysctl-production.conf
-	ln -sfn /var/jetendo-server/system/monit/jetendo.conf /etc/monit/conf.d/jetendo.conf
+	ln -sfn /var/jetendo-server/system/monit/jetendo-production.conf /etc/monit/conf.d/jetendo.conf
 	ln -sfn /var/jetendo-server/system/apache-conf/production-sites-enabled /etc/apache2/sites-enabled
 	ln -sfn /var/jetendo-server/system/php/production-pool /etc/php/7.0/fpm/pool.d
+	
+	replace sa.your-company.com 3 times in /var/jetendo-server/system/monit/jetendo-production.conf with the jetendo server manager domain and change to https if you are using https 
+	
 	
 ln -sfn /var/jetendo-server/system/jetendo-nginx-init /etc/init.d/nginx
 /usr/sbin/update-rc.d -f nginx defaults
@@ -649,6 +652,23 @@ Configure Jungledisk (Optional)
 		vi /etc/jungledisk/junglediskserver-license.xml
 			<?xml version="1.0" encoding="utf-8"?><configuration><LicenseConfig><licenseKey>LICENSE_KEY</licenseKey><proxyServer><enabled>0</enabled> <proxyServer></proxyServer><userName></userName><password></password></proxyServer></LicenseConfig></configuration>
 
+			
+		need to exclude these from being backed up
+			/var/hotcopy   # this is for r1soft cdp
+			/var/cache
+			/var/jetendo-server/mysql/data/   # make sure /zbackup/mysql is backed up!
+			/usr
+			/sbin
+			/lib
+			/lib64
+			/bin
+			/boot
+			/dev
+			/proc
+			
+		Change cache directory to:
+			/zbackup/jungledisk/cache/
+			
 		service junglediskserver restart
 	Use the management client interface from https://www.jungledisk.com/downloads/business/server/linux/ to further configure what and when to backup.  It is highly recommended you enable the encrypted backup feature for best security.  Be sure not to lose your decryption password.
 

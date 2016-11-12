@@ -696,6 +696,7 @@ Enable the php configuration module:
 	ln -sfn /var/jetendo-server/system/apache-conf/development-sites-enabled /etc/apache2/sites-enabled
 	ln -sfn /var/jetendo-server/system/php/development-pool /etc/php/7.0/fpm/pool.d
 	
+	replace sa.your-company.com 3 times in /var/jetendo-server/system/monit/jetendo-development.conf with the jetendo server manager domain and change to https if you are using https 
 	
 	
 # production server symbolic link configuration
@@ -705,6 +706,8 @@ Enable the php configuration module:
 	ln -sfn /var/jetendo-server/system/monit/jetendo.conf /etc/monit/conf.d/jetendo.conf
 	ln -sfn /var/jetendo-server/system/apache-conf/production-sites-enabled /etc/apache2/sites-enabled
 	ln -sfn /var/jetendo-server/system/php/production-pool /etc/php/7.0/fpm/pool.d
+	
+	replace sa.your-company.com 3 times in /var/jetendo-server/system/monit/jetendo-production.conf with the jetendo server manager domain and change to https if you are using https 
 	
 ln -sfn /var/jetendo-server/system/jetendo-nginx-init /etc/init.d/nginx
 /usr/sbin/update-rc.d -f nginx defaults
