@@ -355,9 +355,15 @@ Install lucee
 		
 		Edit /etc/init.d/lucee_ctl 
 			Before echo "[DONE]" in the start function add these lines where company domain is one of the main domain setup in jetendo for the server administrator.
-				printf "\nLoading Jetendo Application\n"
-				/usr/bin/wget -O- 'http://dev.127.0.0.2.nip.io:8888/zcorerootmapping/index.cfm?_zsa3_path=/&zcoreRunFirstInit=1'
-				printf "\n[DONE]"
+				
+				Test Server:
+					printf "\nLoading Jetendo Application\n"
+					/usr/bin/wget -O- 'http://dev.127.0.0.2.nip.io:8888/zcorerootmapping/index.cfm?_zsa3_path=/&zcoreRunFirstInit=1'
+					printf "\n[DONE]"
+				Production Server:
+					printf "\nLoading Jetendo Application\n"
+					/usr/bin/wget -O- 'http://dev.127.0.0.1.nip.io:8888/zcorerootmapping/index.cfm?_zsa3_path=/&zcoreRunFirstInit=1'
+					printf "\n[DONE]"
 			
 		# prevent lucee from starting on boot (requires that jetendo-start.php init script is installed and configured - documentation is incomplete for this)
 		echo manual | sudo tee /etc/init/lucee_ctl.override
