@@ -313,6 +313,13 @@ if(array_key_exists("lucee", $arrServiceMap)){
 		chown('/var/jetendo-server/luceevhosts/tomcat-logs', 'www-data');
 		chgrp('/var/jetendo-server/luceevhosts/tomcat-logs', 'www-data');
 	}
+
+	if(file_exists($currentDir."/lucee_ctl")){
+		$cmd="/bin/cp -f ".$currentDir."/lucee_ctl /etc/init.d/lucee_ctl";
+		chmod('/var/jetendo-server/system/lucee/lucee_ctl', 0755);
+		chown('/var/jetendo-server/luceevhosts/tomcat-logs', 'root');
+		chgrp('/var/jetendo-server/luceevhosts/tomcat-logs', 'root');
+	}
 	echo "Start lucee\n";
 	$r=`/usr/sbin/service lucee_ctl start`;
 	echo $r."\n";
