@@ -402,7 +402,7 @@ Add Prerequisite Repositories
 	
 Install Required Packages
 	# set mysql root password and choose internet site for postfix
-	apt-get install apache2 apt-show-versions monit rsyslog ntp cifs-utils mailutils samba fail2ban libsasl2-modules postfix opendkim opendkim-tools oracle-java7-installer p7zip-full handbrake-cli dnsmasq-base imagemagick ffmpeg git libssl-dev build-essential  libpcre3-dev unzip apparmor-utils rng-tools php-pear mariadb-server make dnsutils
+	apt-get install apache2 apt-show-versions monit rsyslog ntp cifs-utils mailutils samba fail2ban libsasl2-modules postfix opendkim opendkim-tools oracle-java7-installer p7zip-full handbrake-cli dnsmasq-base imagemagick ffmpeg git libssl-dev build-essential  libpcre3-dev unzip apparmor-utils rng-tools php-pear mariadb-server make dnsutils sshpass
 	
 	apt-get install php7.0
 	apt-get install php7.0-mysql php7.0-cli php7.0-fpm php7.0-gd php7.0-curl php7.0-dev php7.0-sqlite3 php-imap

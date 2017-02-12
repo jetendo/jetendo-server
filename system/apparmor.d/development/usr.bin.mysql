@@ -17,6 +17,8 @@
   /etc/mysql/debian.cnf r,
   /sys/devices/system/cpu/ r,
   /usr/bin/mysql mr,
+  /var/jetendo-server/jetendo/share/geoip-data/ r,
+  /var/jetendo-server/jetendo/share/geoip-data/** r,
   /var/jetendo-server/jetendo/share/mls-data/ r,
   /var/jetendo-server/jetendo/share/mls-data/** r,
   /var/jetendo-server/jetendo/share/database/ rw,
