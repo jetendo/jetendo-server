@@ -15,6 +15,7 @@ apache/sites/*
 custom-secure-scripts/*
 nginx/sites/*
 system/nginx-conf/sites/*
+system/nginx-conf/sites-development/*
 php/sites/*
 php/fpm-pool-conf/*
 php/run/*
