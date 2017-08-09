@@ -34,10 +34,12 @@
   /var/jetendo-server/backup/backup/site-archives/** rw,
   /var/jetendo-server/backup/backup/site-archives*/** rw,
   /var/jetendo-server/backup/mysql/** rw,
+  /zbackup/mysql/** rw,
   /zbackup/backup/site-archives/** rw,
   /zbackup/backup/site-archives*/** rw,
   /zbackup2/backup/site-archives/** rw,
   /zbackup2/backup/site-archives*/** rw,
+  /zbackup2/mysql/** rw,
   /tmp/ rw,
   /tmp/** rw,
 
