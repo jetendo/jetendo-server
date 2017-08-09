@@ -75,5 +75,7 @@
   /var/jetendo-server/luceevhosts/** rw,
   /zbackup/backup/ rw,
   /zbackup/backup/** rw,
+  /zbackup2/backup/ rw,
+  /zbackup2/backup/** rw,
 
 }

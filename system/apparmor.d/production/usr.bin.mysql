@@ -36,6 +36,8 @@
   /var/jetendo-server/backup/mysql/** rw,
   /zbackup/backup/site-archives/** rw,
   /zbackup/backup/site-archives*/** rw,
+  /zbackup2/backup/site-archives/** rw,
+  /zbackup2/backup/site-archives*/** rw,
   /tmp/ rw,
   /tmp/** rw,
 
