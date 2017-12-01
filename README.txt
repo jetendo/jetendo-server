@@ -272,8 +272,8 @@ Install Required Software From Source
 	Nginx
 		mkdir /var/jetendo-server/system/nginx-build
 		cd /var/jetendo-server/system/nginx-build
-		wget http://nginx.org/download/nginx-1.11.3.tar.gz
-		tar xvfz nginx-1.11.3.tar.gz
+		wget http://nginx.org/download/nginx-1.13.4.tar.gz
+		tar xvfz nginx-1.13.4.tar.gz
 		adduser --system --no-create-home --disabled-login --disabled-password --group nginx
 		
 		Put "sendfile off;" in nginx.conf on test server when using virtualbox shared folders
@@ -286,8 +286,17 @@ Install Required Software From Source
 			wget https://github.com/agentzh/set-misc-nginx-module/archive/master.zip
 			unzip master.zip -d /var/jetendo-server/system/nginx-build/
 			rm master.zip
+		
+		#compile and install zlib library
+			wget http://zlib.net/zlib-1.2.11.tar.gz
+			tar -zxf zlib-1.2.11.tar.gz
+			cd zlib-1.2.11
+			./configure
+			make
+			sudo make install
 			
-		cd /var/jetendo-server/system/nginx-build/nginx-1.11.3/
+			
+		cd /var/jetendo-server/system/nginx-build/nginx-1.13.4/
 		./configure --with-http_realip_module  --with-http_v2_module --prefix=/var/jetendo-server/nginx --user=nginx --group=nginx --with-http_ssl_module --with-http_gzip_static_module  --with-http_flv_module --with-http_mp4_module --with-http_stub_status_module  --add-module=/var/jetendo-server/system/nginx-build/ngx_devel_kit-master --add-module=/var/jetendo-server/system/nginx-build/set-misc-nginx-module-master
 		make
 		make install
@@ -804,7 +813,7 @@ Configure Jetendo CMS
 		
 		Under Mail Servers -> Server (SMTP), type "localhost" and click update"
 		
-	Configure Lucee security sandbox
+	Configure Lucee security sandbox - Warning: Upgrading Lucee has caused the security sandbox to be deleted in the past.  Be sure to review it periodically.
 		http://jetendo.your-company.com.127.0.0.2.xip.io:8888/lucee/admin/server.cfm?action=security.access&sec_tab=SPECIAL
 		Under Create new context, select "b180779e6dc8f3bb6a8ea14a604d83d4 (/var/jetendo-server/jetendo/sites)" and click Create
 		Then click edit next to the specific web context
@@ -825,6 +834,10 @@ Configure Jetendo CMS
 			/var/jetendo-server/lucee/tomcat/lucee-server/context/
 			/zbackup/backup
 			/zbackup/jetendo
+			
+			# if you have other drives, you can do something like this too:
+			/zbackup2/backup
+			/zbackup2/jetendo
 		Uncheck "Direct Java Access"
 		Uncheck all the boxes under "Tags & Functions" - Jetendo CMS intentionally allows not using these features to be more secure.
 		

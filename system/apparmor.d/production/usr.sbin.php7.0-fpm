@@ -62,5 +62,7 @@
   /var/jetendo-server/backup/jetendo/share/mls-images/** rw,
   /zbackup/jetendo/share/mls-images/ rw,
   /zbackup/jetendo/share/mls-images/** rw,
+  /zbackup3/jetendo/share/mls-images/ rw,
+  /zbackup3/jetendo/share/mls-images/** rw,
 
 }
