@@ -47,14 +47,17 @@ Virtualbox initial setup
 		NAT Advanced Settings -> Port forwarding
 			Name: SSH, Host Ip: 127.0.0.2: Host Port: 22, Guest Ip: 10.0.2.15, Guest Port: 22
 		Setup Shared Folders - The following names must point to the directory with the same name on your host system.  By default, they are a subdirectory of this project, however, you may relocate the paths if you wish for more space or performance.
-			nginx
 			mysql
 			coldfusion
 			system
-			lucee
 			php
 			apache
 			jetendo
+			custom-secure-scripts
+			luceevhosts
+			zserver
+			config
+			backup
 		Hard Disk 1: jetendo-os.vdi
 		Hard Disk 2: jetendo-swap.vdi
 

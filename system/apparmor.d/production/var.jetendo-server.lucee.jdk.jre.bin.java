@@ -45,6 +45,8 @@
   /var/jetendo-server/jetendo/sites rw,
   /var/jetendo-server/jetendo/sites-writable/ rw,
   /var/jetendo-server/jetendo/sites-writable/** rw,
+  /zbackup2/jetendo/sites-writable/ rw,
+  /zbackup2/jetendo/sites-writable/** rw,
   /var/jetendo-server/jetendo/sites/ r,
   /var/jetendo-server/jetendo/sites/** r,
   /var/jetendo-server/jetendo/sites/*/WEB-INF/ rw,

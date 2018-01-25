@@ -19,6 +19,7 @@
   /var/jetendo-server/jetendo/share/mls-images-temp/** r,
   /var/jetendo-server/jetendo/sites/** r,
   /var/jetendo-server/jetendo/sites-writable/** r,
+  /zbackup2/jetendo/sites-writable/** r,
   /var/jetendo-server/jetendo/themes/** r,
   /var/jetendo-server/nginx/client_body_temp/** rw,
   /var/jetendo-server/nginx/conf/** r,
