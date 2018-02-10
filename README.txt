@@ -185,7 +185,7 @@ Log out and login as root using ssh for the rest of the instructions.
 	for development environment, make sure /etc/hostname matches the value used in the Jetendo configuration for the testDomain affix.  I.e. jetendo.127.0.0.2.xip.io
 	
 
-# Add the contents of /jetendo-server/system/jetendo-fstab.conf and copy the file to /etc/fstab, then run
+# If this is a virtual machine: Add the contents of /jetendo-server/system/jetendo-fstab.conf and copy the file to /etc/fstab, then run
 	mkdir /var/jetendo-server/
 	cd /var/jetendo-server/
 	mkdir apache nginx mysql php system lucee coldfusion jetendo backup server config custom-secure-scripts logs virtual-machines luceevhosts
@@ -216,7 +216,7 @@ Add Prerequisite Repositories
 	apt-get update
 
 Install Required Packages
-	apt-get install apache2 apt-show-versions monit rsyslog ntp cifs-utils mailutils samba fail2ban libsasl2-modules postfix opendkim opendkim-tools oracle-java7-installer p7zip-full handbrake-cli dnsmasq imagemagick ffmpeg git libssl-dev build-essential  libpcre3-dev unzip apparmor-utils rng-tools php-pear mariadb-server make sshpass
+	apt-get install apache2 apt-show-versions monit rsyslog ntp cifs-utils mailutils samba fail2ban libsasl2-modules postfix opendkim opendkim-tools oracle-java8-installer p7zip-full handbrake-cli dnsmasq imagemagick ffmpeg git libssl-dev build-essential  libpcre3-dev unzip apparmor-utils rng-tools php-pear mariadb-server make sshpass
 	
 	apt-get install php7.0
 	apt-get install php7.0-mysql php7.0-cli php7.0-fpm php7.0-gd php7.0-curl php7.0-dev php7.0-sqlite3 php7.0-mbstring curl php7.0-imap
@@ -229,6 +229,10 @@ Install Required Packages
 	# accept defaults for all installers - when postfix installer prompts you, i.e. OK, Internet Site
 	# Don't auto-configure database when the rsyslog utility app asks you.
 
+# speed up network failsafe
+	/etc/init/failsafe.conf
+		change the sleeps to 3 3 3 and then change the bottom to 10 seconds instead of 120
+	
 Configure MariaDB
 	service mysql stop
 	#make sure mysql shared folder is mounted if using virtualbox
@@ -329,20 +333,20 @@ Install lucee
 		mkdir /var/jetendo-server/system/apr-build/
 		cd /var/jetendo-server/system/apr-build/
 		# get the newest apr unix gz here: http://apr.apache.org/download.cgi
-		wget http://apache.mirrors.pair.com//apr/apr-1.5.2.tar.gz
-		tar -xvf apr-1.5.2.tar.gz
-		cd apr-1.5.2
+		wget http://apache.mirrors.tds.net//apr/apr-1.6.3.tar.gz
+		tar -xvf apr-1.6.3.tar.gz
+		cd apr-1.6.3
 		./configure
 		make && make install
 	Compile and Install Tomcat Native Library
-		JAVA_HOME=/usr/lib/jvm/java-7-oracle
+		JAVA_HOME=/usr/lib/jvm/java-8-oracle
 		export JAVA_HOME
 		cd /var/jetendo-server/system/apr-build/
 		# get the newest tomcat native library source here: http://tomcat.apache.org/download-native.cgi
-		wget http://mirrors.advancedhosters.com/apache/tomcat/tomcat-connectors/native/1.1.33/source/tomcat-native-1.1.33-src.tar.gz
-		tar -xvzf tomcat-native-1.1.33-src.tar.gz
-		cd tomcat-native-1.1.33-src/jni/native/
-		./configure --with-apr=/usr/local/apr/bin/ --with-ssl=/usr/include/openssl --with-java-home=/usr/lib/jvm/java-7-oracle && make && make install
+		wget http://apache.mirrors.ionfish.org/tomcat/tomcat-connectors/native/1.2.16/source/tomcat-native-1.2.16-src.tar.gz
+		tar -xvzf tomcat-native-1.2.16-src.tar.gz
+		cd tomcat-native-1.2.16-src/native/
+		./configure --with-apr=/usr/local/apr/bin/ --with-ssl=/usr/include/openssl --with-java-home=/usr/lib/jvm/java-8-oracle && make && make install
 		
 	Install lucee from newest tomcat x64 binary release on www.lucee.org
 		mkdir /var/jetendo-server/system/lucee/
@@ -362,7 +366,7 @@ Install lucee
 		Don't allow installation of apache connectors: n
 		Remember to write down password for Tomcat/lucee administrator.
 		
-		Edit /etc/init.d/lucee_ctl 
+		Edit /etc/init.d/lucee_ctl
 			Before echo "[DONE]" in the start function add these lines where company domain is one of the main domain setup in jetendo for the server administrator.
 				
 				Test Server:
@@ -387,7 +391,7 @@ Install lucee
 		service lucee_ctl stop
 		rm -rf /var/jetendo-server/lucee/jdk/jre
 		mkdir /var/jetendo-server/lucee/jdk/jre
-		/bin/cp -rf /usr/lib/jvm/java-7-oracle/jre/* /var/jetendo-server/lucee/jdk/jre
+		/bin/cp -rf /usr/lib/jvm/java-8-oracle/jre/* /var/jetendo-server/lucee/jdk/jre
 		chown -R www-data:www-data /var/jetendo-server/lucee/
 		chmod -R 770 /var/jetendo-server/lucee/
 
@@ -445,7 +449,7 @@ Install lucee
 	http://dev.com.127.0.0.2.xip.io:8888/lucee/admin/web.cfm?action=resources.mappings
 	
 	
-	Lucee has been patched in order to fix some things.  Here are the notes to re-create the patch until there is an official fix.
+	NO LONGER NEED THESE PATCH NOTES in newer versions of lucee: Lucee has been patched in order to fix some things.  Here are the notes to re-create the patch until there is an official fix.
 			learn how to build and deploy a patched version of lucee from source before making any changes:
 				https://bitbucket.org/lucee/lucee/wiki/Build_from_source
 				
