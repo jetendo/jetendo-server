@@ -218,11 +218,16 @@ Add Prerequisite Repositories
 Install Required Packages
 	apt-get install apache2 apt-show-versions monit rsyslog ntp cifs-utils mailutils samba fail2ban libsasl2-modules postfix opendkim opendkim-tools oracle-java8-installer p7zip-full handbrake-cli dnsmasq imagemagick ffmpeg git libssl-dev build-essential  libpcre3-dev unzip apparmor-utils rng-tools php-pear mariadb-server make sshpass
 	
-	apt-get install php7.0
-	apt-get install php7.0-mysql php7.0-cli php7.0-fpm php7.0-gd php7.0-curl php7.0-dev php7.0-sqlite3 php7.0-mbstring curl php7.0-imap
+	# remove php 7.0
+	apt purge php7.0*
+	apt-get remove php7.0 php7.0-mysql php7.0-cli php7.0-fpm php7.0-gd php7.0-curl php7.0-dev php7.0-sqlite3 php7.0-mbstring curl php7.0-imap php7.0-opcache php7.0-readline
+
+	
+	apt-get install php7.2
+	apt-get install php7.2-mysql php7.2-cli php7.2-fpm php7.2-gd php7.2-curl php7.2-dev php7.2-sqlite3 php7.2-mbstring curl php7.2-imap
 	
 	# if you want to use php with apache2, also run this:
-	apt-get install libapache2-mod-php7.0
+	apt-get install libapache2-mod-php7.2
 	
 	# dnstools missing from ubuntu 14.04 lts now
 	
@@ -240,20 +245,13 @@ Configure MariaDB
 	
 	# to begin with a fresh database, run this command to overwrite your mysql/data folder. WARNING:  If you existing mysql data files on your host system already, don't run this command.
 	mkdir /var/jetendo-server/mysql/data/
-	mkdir /var/jetendo-server/mysql/logs/
 	cp -rf /var/lib/mysql/* /var/jetendo-server/mysql/data/
 	chown -R mysql:mysql /var/jetendo-server/mysql/data/
-	chown -R mysql:mysql /var/jetendo-server/mysql/logs/
 	
 	# disable the /root/.mysql_history file
 	export MYSQL_HISTFILE=/dev/null
 	
 	you must get the password in /etc/mysql/debian.cnf, and create "debian-sys-maint" user with host: localhost AND 127.0.0.1 with global access to all privileges for service mysql restart to work correctly.
-
-# add hosts to system to force dns resolution to work for more loopback ips:
-	vi /etc/hosts
-		127.0.0.2 nginx
-		127.0.0.3 apache
 
 Configure Apache2 (Note: Jetendo CMS uses Nginx exclusive, Apache configuration is optional)
 	# enable modules
@@ -389,12 +387,17 @@ Install lucee
 		
 	Put newest JRE In lucee:
 		service lucee_ctl stop
-		rm -rf /var/jetendo-server/lucee/jdk/jre
+		mv /var/jetendo-server/lucee/jdk/jre /var/jetendo-server/lucee/jdk/jre-original
 		mkdir /var/jetendo-server/lucee/jdk/jre
 		/bin/cp -rf /usr/lib/jvm/java-8-oracle/jre/* /var/jetendo-server/lucee/jdk/jre
 		chown -R www-data:www-data /var/jetendo-server/lucee/
 		chmod -R 770 /var/jetendo-server/lucee/
 
+	mkdir /var/jetendo-server/jetendo/
+	mkdir /var/jetendo-server/jetendo/sites
+	mkdir /var/jetendo-server/jetendo/share
+	touch /var/jetendo-server/jetendo/share/hostmap.conf
+	touch /var/jetendo-server/jetendo/share/hostmap-redirect.conf
 	mkdir /var/jetendo-server/luceevhosts/
 	mkdir /var/jetendo-server/luceevhosts/server/
 	mkdir /var/jetendo-server/luceevhosts/tomcat-logs/
@@ -520,10 +523,10 @@ Configure the variables in jetendo.ini manually
 	/var/jetendo-server/system/php/jetendo.ini
 	
 Make sure the jetendo.ini symbolic link is created:
-	ln -sfn /var/jetendo-server/system/php/jetendo.ini /etc/php/7.0/mods-available/jetendo.ini
+	ln -sfn /var/jetendo-server/system/php/jetendo.ini /etc/php/7.2/mods-available/jetendo.ini
 Enable the php configuration module:	
 	phpenmod jetendo
-	service php7.0-fpm restart
+	service php7.2-fpm restart
 	
 # development server symbolic link configuration
 	ln -sfn /var/jetendo-server/system/jetendo-mysql-development.cnf /etc/mysql/conf.d/jetendo-mysql-development.cnf 
@@ -531,7 +534,7 @@ Enable the php configuration module:
 	ln -sfn /var/jetendo-server/system/jetendo-sysctl-development.conf /etc/sysctl.d/jetendo-sysctl-development.conf
 	ln -sfn /var/jetendo-server/system/monit/jetendo-development.conf /etc/monit/conf.d/jetendo.conf
 	ln -sfn /var/jetendo-server/system/apache-conf/development-sites-enabled /etc/apache2/sites-enabled
-	ln -sfn /var/jetendo-server/system/php/development-pool /etc/php/7.0/fpm/pool.d
+	ln -sfn /var/jetendo-server/system/php/development-pool /etc/php/7.2/fpm/pool.d
 		
 	replace sa.your-company.com 3 times in /var/jetendo-server/system/monit/jetendo-development.conf with the jetendo server manager domain and change to https if you are using https 
 	
@@ -541,12 +544,13 @@ Enable the php configuration module:
 	ln -sfn /var/jetendo-server/system/jetendo-sysctl-production.conf /etc/sysctl.d/jetendo-sysctl-production.conf
 	ln -sfn /var/jetendo-server/system/monit/jetendo-production.conf /etc/monit/conf.d/jetendo.conf
 	ln -sfn /var/jetendo-server/system/apache-conf/production-sites-enabled /etc/apache2/sites-enabled
-	ln -sfn /var/jetendo-server/system/php/production-pool /etc/php/7.0/fpm/pool.d
+	ln -sfn /var/jetendo-server/system/php/production-pool /etc/php/7.2/fpm/pool.d
 	
 	replace sa.your-company.com 3 times in /var/jetendo-server/system/monit/jetendo-production.conf with the jetendo server manager domain and change to https if you are using https 
 	
 	
-ln -sfn /var/jetendo-server/system/jetendo-nginx-init /etc/init.d/nginx
+cp /var/jetendo-server/system/jetendo-nginx-init /etc/init.d/nginx
+chmod +x /etc/init.d/nginx
 /usr/sbin/update-rc.d -f nginx defaults
 
 # enable apparmor profiles:
@@ -736,7 +740,7 @@ Visit http://xip.io/ to understand how this free service helps you create develo
 	
 	You can also use nip.io the same way.
 	
-By default, this is not needed.  If you want additional pools, add them like this.  one listen path for each fastcgi pool.   /etc/php/7.0/fpm/pool.d/dev.com.conf  - but lets symbolic link it to /var/jetendo-server/system/php/fpm-pool-conf/
+By default, this is not needed.  If you want additional pools, add them like this.  one listen path for each fastcgi pool.   /etc/php/7.2/fpm/pool.d/dev.com.conf  - but lets symbolic link it to /var/jetendo-server/system/php/fpm-pool-conf/
 			[dev.com]
 			listen = /var/jetendo-server/php/run/fpm.dev.com.sock
 			listen.owner = www-user
@@ -760,13 +764,21 @@ Reboot the virtual machine to ensure all services are installed and running befo
 	Also, to turn off the machine gracefully, you can type the following at a shell prompt:
 		poweroff
 	
-		
+		 
 Configure Jetendo CMS
 
 	Install the Jetendo source code from git by running the php script below from the command line.
 	You can edit this file to change the git repo or branch if you want to work on a fork or different branch of the project.  If you intend to contribute to the project, it would be wise to create a fork first.  You can always change your git remote origin later.
 	Note: If you want to run a RELEASE version of Jetendo CMS, skip running this file.
 		php /var/jetendo-server/system/install-jetendo.php
+		
+		or just run these commands:
+		chmod 755 /var/jetendo-server/jetendo/
+		chmod 770 /var/jetendo-server/jetendo/sites
+		mkdir /var/jetendo-server/jetendo/themes
+		mkdir /var/jetendo-server/jetendo/sites-writable
+		chmod 770 /var/jetendo-server/jetendo/sites-writable
+		mkdir /var/jetendo-server/backup/
 		
 	Add the following mappings to the Lucee web admin for the /var/jetendo-server/jetendo/ context:
 		Lucee web admin URL for VirtualBox (create a new password if it asks.)
@@ -781,7 +793,7 @@ Configure Jetendo CMS
 		
 		Virtual: /zcorerootmapping
 		Resource Path: /var/jetendo-server/jetendo/core
-		After creating "/zcorerootmapping", click the edit icon and make sure "Top level accessible" is checked and click save.
+		After creating "/zcorerootmapping", click the edit icon and make sure "Web accessible" is checked and click save.
 		
 		Virtual: /jetendo-themes
 		Resource Path: /var/jetendo-server/jetendo/themes
@@ -809,7 +821,7 @@ Configure Jetendo CMS
 				Legacy Datetime Code: true
 
 	
-	Enable complete null support and set dot notation to Keep Original Case (fixes javascript case problems):
+	Enable complete null support and set Key case to Preserve Case (fixes javascript case problems) and Template charset to UTF-8:
 		http://dev.com.127.0.0.2.xip.io:8888/lucee/admin/server.cfm?action=server.compiler
 		
 	Enable mail server:
@@ -824,7 +836,6 @@ Configure Jetendo CMS
 		On a production server, set General Access for read and write to "closed" when you don't need to access the Lucee admin.   You can re-enable it only when you need to make changes.
 		Under File Access, select "Local" and enter the following directories. 
 			Note: In Lucee 4.2, you have to enter one directory at a time by submitting the form with one entered, and then click edit again to enter the next one.
-			/var/jetendo-server/lucee/tomcat/lucee-server/context/userdata
 			/var/jetendo-server/jetendo/core
 			/var/jetendo-server/jetendo/sites
 			/var/jetendo-server/jetendo/share
@@ -846,14 +857,26 @@ Configure Jetendo CMS
 		Uncheck all the boxes under "Tags & Functions" - Jetendo CMS intentionally allows not using these features to be more secure.
 		
 	Edit the values in the following files to match the configuration of your system.
-		/var/jetendo-server/jetendo/core/config.cfc
-	
+		touch /var/jetendo-server/jetendo/core/config.cfc
+		chown www-data:www-data /var/jetendo-server/jetendo/core/config.cfc
+		chmod 770 /var/jetendo-server/jetendo/core/config.cfc
 	If you want to run a RELEASE version of Jetendo CMS, follow these steps:
 		Download the release file for the "jetendo" project, and unzip its contents to /var/jetendo-server/jetendo in the virtual machine or server.  Make sure that there is no an extra /var/jetendo-server/jetendo/jetendo directory.  The files should be in /var/jetendo-server/jetendo/
 		Download the release file for the "jetendo-default-theme" project and unzip its contents to /var/jetendo-server/jetendo/themes/jetendo-default-theme in the virtual machine or server. Make sure that there is no an extra /var/jetendo-server/jetendo/themes/jetendo-default-theme/jetendo-default-theme directory.  The files should be in /var/jetendo-server/jetendo/themes/jetendo-default-theme
+		chmod -R 770 /var/jetendo-server/jetendo/themes
+		chown -R www-data:www-data /var/jetendo-server/jetendo/themes
+		
+		vi /var/jetendo-server/custom-secure-scripts
+		vi /var/jetendo-server/custom-secure-scripts/retsConfig.php
+			<?php  
+			$arrRetsConfig=array();
+			?>
 		
 		Run this command to install the release without forcing it to use the git repository:
 			php /var/jetendo-server/jetendo/scripts/install.php disableGitIntegration
+			
+			If it says "configPath is missing", then you haven't setup php with jetendo.ini correctly yet.
+			
 		Note: the project will not be installed as a git repository, so you will have to manually perform upgrades in the future.
 		
 	If you want to run the DEVELOPMENT version of Jetendo CMS, follow these steps:
