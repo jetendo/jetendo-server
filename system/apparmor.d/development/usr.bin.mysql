@@ -36,4 +36,6 @@
   /var/jetendo-server/backup/mysql/** rw,
   /tmp/ rw,
   /tmp/** rw,
+   /usr/local/lib/libz.so.* mr,
+
 }

@@ -20,6 +20,7 @@
   /proc/filesystems r,
   /proc/loadavg r,
   /sys/devices/system/cpu/ r,
+	/etc/java-8-oracle/security/java.security r,
   /tmp/hsperfdata_www-data/ rw,
   /tmp/hsperfdata_www-data/** rw,
   /var/www/.oracle_jre_usage/ a,
