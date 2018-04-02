@@ -28,6 +28,7 @@
   /etc/php/7.0/fpm/pool.d/www.conf r,
   /etc/php/7.0/mods-available/* r,
   /var/jetendo-server/jetendo/phptemp/* w,
+  /var/jetendo-server/jetendo/scripts/library.php r,
   /var/jetendo-server/jetendo/public/a/content/oauth.php r,
   /var/jetendo-server/jetendo/public/a/content/yelp.php r,
   /var/jetendo-server/jetendo/public/a/host-time.php r,

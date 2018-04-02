@@ -213,10 +213,11 @@ Add Prerequisite Repositories
 	add-apt-repository ppa:kirillshkrogalev/ffmpeg-next
 	add-apt-repository ppa:webupd8team/java
 	add-apt-repository ppa:stebbins/handbrake-releases
+	add-apt-repository ppa:isage-dna/imagick
 	apt-get update
 
 Install Required Packages
-	apt-get install apache2 apt-show-versions monit rsyslog ntp cifs-utils mailutils samba fail2ban libsasl2-modules postfix opendkim opendkim-tools oracle-java8-installer p7zip-full handbrake-cli dnsmasq imagemagick ffmpeg git libssl-dev build-essential  libpcre3-dev unzip apparmor-utils rng-tools php-pear mariadb-server make sshpass
+	apt-get install apache2 apt-show-versions monit rsyslog ntp cifs-utils mailutils samba fail2ban libsasl2-modules postfix opendkim opendkim-tools oracle-java8-installer p7zip-full handbrake-cli dnsmasq imagemagick ffmpeg git libssl-dev build-essential  libpcre3-dev unzip apparmor-utils rng-tools php-pear mariadb-server make sshpass dnsutils
 	
 	# remove php 7.0
 	apt purge php7.0*
@@ -847,6 +848,7 @@ Configure Jetendo CMS
 			/var/jetendo-server/jetendo/database-upgrade
 			/var/jetendo-server/backup/
 			/var/jetendo-server/lucee/tomcat/lucee-server/context/
+			/var/jetendo-server/lucee/tomcat/lucee-server/context/userdata
 			/zbackup/backup
 			/zbackup/jetendo
 			
