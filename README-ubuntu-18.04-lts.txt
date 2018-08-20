@@ -1,5 +1,10 @@
+TODO: 
+	important, i left monit disabled
+	i didn't finish apparmor for new tomcat
+	I could use ZFS still in a new version for better disk usage and backup.
+
 Jetendo Server Installation Documentation
-OS: Ubuntu Server 14.04 LTS
+OS: Ubuntu Server 18.04 LTS
 
 This readme is for users that want to install Jetendo Server and Jetendo from scratch.
 If you downloaded the pre-configured virtual machine from https://www.jetendo.com/ , please use README-FOR-VIRTUAL-MACHINE.txt to get started with it.
@@ -16,12 +21,7 @@ Virtualbox initial setup
 	Ubuntu Linux x64
 	Minimum requirements: 2048mb ram, 5gb hard drive, 1gb 2nd hard drive for swap, 1 NAT network adapter
 	NAT Advanced Settings -> Port forwarding
-		Name: SSH, Host Ip: 127.0.0.2: Host Port: 3222, Guest Ip: 10.0.2.15, Guest Port: 22
-		Name: Nginx, Host Ip: 127.0.0.2: Host Port: 80, Guest Ip: 10.0.2.15, Guest Port: 80
-		Name: Nginx SSL, Host Ip: 127.0.0.2: Host Port: 443, Guest Ip: 10.0.2.15, Guest Port: 443
-		Name: Apache, Host Ip: 127.0.0.3: Host Port: 80, Guest Ip: 10.0.2.16, Guest Port: 80
-		Name: Apache SSL, Host Ip: 127.0.0.3: Host Port: 443, Guest Ip: 10.0.2.16, Guest Port: 443
-		Name: Lucee, Host Ip: 127.0.0.2: Host Port: 8888, Guest Ip: 10.0.2.15, Guest Port: 8888
+		Name: SSH, Host Ip: 127.0.0.2: Host Port: 22, Guest Ip: 10.0.2.15, Guest Port: 22
 	Setup Shared Folders - The following names must point to the directory with the same name on your host system.  By default, they are a subdirectory of this README.txt file, however, you may relocate the paths if you wish.
 		nginx
 		mysql
@@ -31,10 +31,9 @@ Virtualbox initial setup
 		php
 		apache
 		jetendo
-	Download and mount Ubuntu 14.04 LTS ISO to cdrom on first boot
-	
-	At Install Prompt, Press F4 (modes) and select Minimal Virtual Machine Install if this is virtual machine
-		make / (root) partition on at least a 3gb drive.
+	Download and mount Ubuntu 18.04 Server LTS ISO to cdrom on first boot
+
+		make / (root) partition on at least a 3gb drive - 8gb+ recommended.
 		setup /var on a large separate drive (20gb+) and one large partition, so that the base file is as small as possible with all variable data on the second drive, which can be cloned and attached to multiple virtual machines.
 		use defaults for all options - except don't encrypt your home directory.
 	The username created during install will not be used later.
@@ -44,13 +43,13 @@ Virtualbox initial setup
 		SSH/SFTP with:
 			127.0.0.2 port 22
 		Apache web sites with:
-			www.your-site.com.127.0.0.3.xip.io
+			www.your-site.com.127.0.0.3.nip.io
 		Nginx web sites with:
-			www.your-site.com.127.0.0.2.xip.io
+			www.your-site.com.127.0.0.2.nip.io
 		Lucee administrator:
 			http://127.0.0.2:8888/lucee/admin/server.cfm
 		Jetendo Administrator:
-			https://jetendo.your-company.com.127.0.0.2.xip.io/z/server-manager/admin/server-home/index
+			https://jetendo.your-company.com.127.0.0.2.nip.io/z/server-manager/admin/server-home/index
 			
 	To run other copies of the virtual machine, just update the IP addresses to be unique.  You can use any ips on 127.x.x.x for this without reconfiguring your host system.
 			
@@ -67,6 +66,9 @@ sudo -i
 	Press escape key
 	:wq
 	Now vi insert mode is easier to use by just pressing i once.
+	
+	#add a line to vi /etc/vim/vimrc	
+		set background=dark
 
 # disable bash history storage
 	vi /root/.profile
@@ -86,10 +88,10 @@ sudo -i
 			
 	update-grub
 	
-# vi /etc/init/cron.conf
+TODOMISSING: # vi /etc/init/cron.conf
 	change "exec cron" to "exec cron -L 0"  to stop it from filling syslog with non-error messages.
 	and
-#vi /etc/rsyslog.conf
+#vi /etc/rsyslog.d/50-default.conf
 	change 
 		*.*;auth,authpriv.none		-/var/log/syslog
 	to
@@ -99,14 +101,19 @@ sudo -i
 	sudo apt-get update
 	sudo apt-get upgrade
 	sudo apt-get dist-upgrade
-	sudo reboot
 	
-# setup ssh
-	sudo apt-get install -qqy --force-yes openssh-server
+# Enable empty password autologin for root on development server
+	sudo passwd root
+	vi /etc/pam.d/common-auth
+		change nullok_secure to nullok
+	vi /etc/ssh/sshd_config
+		PermitEmptyPasswords Yes
+	vi /etc/shadow
+		delete the password hash for root between the 2 colons so it appears like "root::" on the first line.
 	
-# setup ufw
-	sudo apt-get install ufw
-	
+	service ssh restart
+
+# configure firewall	
 	# allow web traffic:
 	sudo ufw allow 80/tcp
 	sudo ufw allow 443/tcp
@@ -124,53 +131,38 @@ sudo -i
 	
 		add to /etc/ufw/before.rules after the "drop INVALID packets" configuration lines
 		
-			# Limit to 30 concurrent connections on port 80 per IP
-			-A ufw-before-input -p tcp --syn --dport 80 -m connlimit --connlimit-above 30 -j REJECT
-			-A ufw-before-input -p tcp --syn --dport 443 -m connlimit --connlimit-above 30 -j REJECT
+# Limit to 30 concurrent connections on port 80 per IP
+-A ufw-before-input -p tcp --syn --dport 80 -m connlimit --connlimit-above 30 -j REJECT
+-A ufw-before-input -p tcp --syn --dport 443 -m connlimit --connlimit-above 30 -j REJECT
 
-			# Limit to 20 connections on port 80 per 1 seconds per IP
-			-A ufw-before-input -p tcp --dport 80 -i eth0 -m state --state NEW -m recent --set
-			-A ufw-before-input -p tcp --dport 80 -i eth0 -m state --state NEW -m recent --update --seconds 1 --hitcount 20 -j REJECT
-			-A ufw-before-input -p tcp --dport 443 -i eth0 -m state --state NEW -m recent --set
-			-A ufw-before-input -p tcp --dport 443 -i eth0 -m state --state NEW -m recent --update --seconds 1 --hitcount 20 -j REJECT
-			
-			
-			# jetendo - block invalid tcp commands
-			-A ufw-before-input -p TCP --tcp-flags ALL FIN,URG,PSH -j DROP
-			-A ufw-before-input -p TCP --tcp-flags ALL SYN,RST,ACK,FIN,URG -j DROP
-			-A ufw-before-input -p TCP --tcp-flags SYN,RST SYN,RST -j DROP
-			-A ufw-before-input -p TCP --tcp-flags SYN,FIN SYN,FIN -j DROP
-			-A ufw-before-input -p TCP --tcp-flags SYN,ACK NONE -j DROP
-			-A ufw-before-input -p TCP --tcp-flags RST,FIN RST,FIN -j DROP
-			-A ufw-before-input -p TCP --tcp-flags SYN,URG SYN,URG -j DROP
-			-A ufw-before-input -p TCP --tcp-flags ALL SYN,PSH -j DROP
-			-A ufw-before-input -p TCP --tcp-flags ALL SYN,ACK,PSH -j DROP
+# Limit to 20 connections on port 80 per 1 seconds per IP
+-A ufw-before-input -p tcp --dport 80 -i eth0 -m state --state NEW -m recent --set
+-A ufw-before-input -p tcp --dport 80 -i eth0 -m state --state NEW -m recent --update --seconds 1 --hitcount 20 -j REJECT
+-A ufw-before-input -p tcp --dport 443 -i eth0 -m state --state NEW -m recent --set
+-A ufw-before-input -p tcp --dport 443 -i eth0 -m state --state NEW -m recent --update --seconds 1 --hitcount 20 -j REJECT
+
+# jetendo - block invalid tcp commands
+-A ufw-before-input -p TCP --tcp-flags ALL FIN,URG,PSH -j DROP
+-A ufw-before-input -p TCP --tcp-flags ALL SYN,RST,ACK,FIN,URG -j DROP
+-A ufw-before-input -p TCP --tcp-flags SYN,RST SYN,RST -j DROP
+-A ufw-before-input -p TCP --tcp-flags SYN,FIN SYN,FIN -j DROP
+-A ufw-before-input -p TCP --tcp-flags SYN,ACK NONE -j DROP
+-A ufw-before-input -p TCP --tcp-flags RST,FIN RST,FIN -j DROP
+-A ufw-before-input -p TCP --tcp-flags SYN,URG SYN,URG -j DROP
+-A ufw-before-input -p TCP --tcp-flags ALL SYN,PSH -j DROP
+-A ufw-before-input -p TCP --tcp-flags ALL SYN,ACK,PSH -j DROP
 	service ufw restart
 	
 	ufw enable
-	
-# Enable empty password autologin for root on development server
-	might also need to run
-		sudo passwd -u root
-	sudo passwd - enter temporary password
-	vi /etc/pam.d/common-auth
-		change nullok_secure to nullok
-	vi /etc/ssh/sshd_config
-		PermitEmptyPasswords Yes
-	vi /etc/shadow
-		delete the password hash for root between the 2 colons so it appears like "root::" on the first line.
-	
-	service ssh restart
-	
+
 Log out and login as root using ssh for the rest of the instructions.
 
 # If server is a virtualbox virtual machine
-	apt-get install build-essential module-assistant linux-headers-$(uname -r) dkms
-	apt-get install virtualbox-guest-dkms virtualbox-guest-utils virtualbox-guest-x11
-	m-a prepare
-	#rebuild the kernel modules (at any time)
-		uname -r | sudo xargs -n1 /usr/lib/dkms/dkms_autoinstaller start
-	apt-get install --no-install-recommends virtualbox-guest-utils && apt-get install virtualbox-guest-dkms
+	apt-get install build-essential linux-headers-$(uname -r) dkms
+	
+	mount /dev/cdrom /media
+	sh /media/VBoxLinuxAdditions.run
+	umount 
 	
 	# force the vboxsf dkms kernel module to load before fstab runs
 		vi /etc/default/rcS
@@ -182,7 +174,7 @@ Log out and login as root using ssh for the rest of the instructions.
 	
 			
 # update hostname
-	for development environment, make sure /etc/hostname matches the value used in the Jetendo configuration for the testDomain affix.  I.e. jetendo.127.0.0.2.xip.io
+	for development environment, make sure /etc/hostname matches the value used in the Jetendo configuration for the testDomain affix.  I.e. jetendo.127.0.0.2.nip.io
 	
 
 # If this is a virtual machine: Add the contents of /jetendo-server/system/jetendo-fstab.conf and copy the file to /etc/fstab, then run
@@ -193,52 +185,34 @@ Log out and login as root using ssh for the rest of the instructions.
 	mount mysql fails until it is installed because user doesn't exist yet.
 	
 Add Prerequisite Repositories
-	apt-get install software-properties-common
-	apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
-	add-apt-repository 'deb http://ftp.utexas.edu/mariadb/repo/10.0/ubuntu trusty main'
-
+	sudo add-apt-repository ppa:linuxuprising/java
+	NOT NEEDED add-apt-repository ppa:kirillshkrogalev/ffmpeg-next
+	add-apt-repository ppa:stebbins/handbrake-releases
+	add-apt-repository "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) universe"
 	
-	#best way to upgrade from mariadb 10.0 to 10.1 (10.1 fails to function - don't install 10.1)
-	service monit stop
-	service mysql stop
-	 apt-get -f remove --auto-remove mariadb-server
-	add-apt-repository --remove 'deb [arch=amd64,i386] http://mirrors.accretive-networks.net/mariadb/repo/10.1/ubuntu trusty main'
-	apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db
-	add-apt-repository 'deb [arch=amd64,i386] http://mirrors.accretive-networks.net/mariadb/repo/10.1/ubuntu trusty main'
+	sudo apt-get install software-properties-common
+	sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
+	sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.3/ubuntu bionic main' 
+ 
+Install Required Packages
 	apt-get update
 	apt-get install mariadb-server
-
-	apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0x4F4EA0AAE5267A6C
-	LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php
-	add-apt-repository ppa:kirillshkrogalev/ffmpeg-next
-	add-apt-repository ppa:webupd8team/java
-	add-apt-repository ppa:stebbins/handbrake-releases
-	add-apt-repository ppa:isage-dna/imagick
-	apt-get update
-
-Install Required Packages
-	apt-get install apache2 apt-show-versions monit rsyslog ntp cifs-utils mailutils samba fail2ban libsasl2-modules postfix opendkim opendkim-tools oracle-java8-installer p7zip-full handbrake-cli dnsmasq imagemagick ffmpeg git libssl-dev build-essential  libpcre3-dev unzip apparmor-utils rng-tools php-pear mariadb-server make sshpass dnsutils
 	
-	
-	# remove php 7.0
-	apt purge php7.0*
-	apt-get remove php7.0 php7.0-mysql php7.0-cli php7.0-fpm php7.0-gd php7.0-curl php7.0-dev php7.0-sqlite3 php7.0-mbstring curl php7.0-imap php7.0-opcache php7.0-readline
+CONTINUE HERE
 
-	
+	apt-get install apache2  cifs-utils samba libsasl2-modules postfix openjdk-11-jdk imagemagick git libssl-dev build-essential libpcre3-dev unzip apparmor-utils php-pear make dnsutils
+	timedatectl set-ntp on
+	timedatectl set-timezone America/New_York
+	  
 	apt-get install php7.2
-	apt-get install php7.2-mysql php7.2-cli php7.2-fpm php7.2-gd php7.2-curl php7.2-dev php7.2-sqlite3 php7.2-mbstring curl php7.2-imap php-imagick
+	apt-get install php7.2-mysql php7.2-cli php7.2-gd php7.2-curl php7.2-dev php7.2-sqlite3 curl
+	
+	apt-get install php7.2-common php7.2-mbstring php7.2-imap php-imagick php7.2-fpm handbrake-gtk handbrake-cli rng-tools p7zip-full mailutils fail2ban opendkim opendkim-tools dnsmasq ffmpeg monit sshpass handbrake-cli
 	
 	# if you want to use php with apache2, also run this:
 	apt-get install libapache2-mod-php7.2
 	
-	# dnstools missing from ubuntu 14.04 lts now
-	
 	# accept defaults for all installers - when postfix installer prompts you, i.e. OK, Internet Site
-	# Don't auto-configure database when the rsyslog utility app asks you.
-
-# speed up network failsafe
-	/etc/init/failsafe.conf
-		change the sleeps to 3 3 3 and then change the bottom to 10 seconds instead of 120
 	
 Configure MariaDB
 	service mysql stop
@@ -249,6 +223,7 @@ Configure MariaDB
 	mkdir /var/jetendo-server/mysql/data/
 	cp -rf /var/lib/mysql/* /var/jetendo-server/mysql/data/
 	chown -R mysql:mysql /var/jetendo-server/mysql/data/
+	cp /var/jetendo-server/system/jetendo-mysql-development.cnf /etc/mysql/my.cnf
 	
 	# disable the /root/.mysql_history file
 	export MYSQL_HISTFILE=/dev/null
@@ -272,23 +247,39 @@ Configure Apache2 (Note: Jetendo CMS uses Nginx exclusive, Apache configuration 
 		update-rc.d apache2 enable
 		service apache2 start
 	
+Install OpenSSL 1.1.1+ for TLS 1.3 and more
+	mkdir /root/openssltemp
+	cd /root/openssltemp
+	wget https://www.openssl.org/source/openssl-1.1.1-pre8.tar.gz
+	tar xvf openssl-1.1.1-pre8.tar.gz
+	cd openssl-1.1.1-pre8
+	./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl -Wl,-rpath,/usr/local/ssl/lib
+	make
+	make install
+	add openssl path to the BEGINNING of the PATH variable in /etc/environment and save
+		/usr/local/ssl/bin
+		test with:
+			openssl version
+	
 Install Required Software From Source
 	Nginx
-		mkdir /var/jetendo-server/system/nginx-build
-		cd /var/jetendo-server/system/nginx-build
-		wget http://nginx.org/download/nginx-1.13.4.tar.gz
-		tar xvfz nginx-1.13.4.tar.gz
+		mkdir /root/nginx-build
+		
+TODO STOPPED HERE:		
+		cd /root/nginx-build
+		wget http://nginx.org/download/nginx-1.15.2.tar.gz
+		tar xvfz nginx-1.15.2.tar.gz
 		adduser --system --no-create-home --disabled-login --disabled-password --group nginx
 		
 		Put "sendfile off;" in nginx.conf on test server when using virtualbox shared folders
 		
 		#download and unzip nginx modules
-			cd /var/jetendo-server/system/nginx-build/
+			cd /root/nginx-build/
 			wget https://github.com/simpl/ngx_devel_kit/archive/master.zip
-			unzip master.zip -d /var/jetendo-server/system/nginx-build/
+			unzip master.zip -d /root/nginx-build/
 			rm master.zip
 			wget https://github.com/agentzh/set-misc-nginx-module/archive/master.zip
-			unzip master.zip -d /var/jetendo-server/system/nginx-build/
+			unzip master.zip -d /root/nginx-build/
 			rm master.zip
 		
 		#compile and install zlib library
@@ -300,8 +291,8 @@ Install Required Software From Source
 			sudo make install
 			
 			
-		cd /var/jetendo-server/system/nginx-build/nginx-1.13.4/
-		./configure --with-http_realip_module  --with-http_v2_module --prefix=/var/jetendo-server/nginx --user=nginx --group=nginx --with-http_ssl_module --with-http_gzip_static_module  --with-http_flv_module --with-http_mp4_module --with-http_stub_status_module  --add-module=/var/jetendo-server/system/nginx-build/ngx_devel_kit-master --add-module=/var/jetendo-server/system/nginx-build/set-misc-nginx-module-master
+		cd /root/nginx-build/nginx-1.15.2/
+		./configure --with-openssl=/root/openssltemp/openssl-1.1.1-pre8 --with-openssl-opt=enable-tls1_3 --with-http_realip_module  --with-http_v2_module --prefix=/var/jetendo-server/nginx --user=nginx --group=nginx --with-http_ssl_module --with-http_gzip_static_module  --with-http_flv_module --with-http_mp4_module --with-http_stub_status_module  --add-module=/root/nginx-build/ngx_devel_kit-master --add-module=/root/nginx-build/set-misc-nginx-module-master
 		make
 		make install
 		cd /var/jetendo-server/nginx
@@ -325,7 +316,6 @@ Install Required Software From Source
 		audio/webm weba;
 		application/x-font-ttf             ttf;
 		font/opentype                      otf;
-		application/font-woff2            woff2;
 		
 	
 Install lucee
@@ -339,35 +329,79 @@ Install lucee
 		./configure
 		make && make install
 	Compile and Install Tomcat Native Library
-		JAVA_HOME=/usr/lib/jvm/java-8-oracle
-		export JAVA_HOME
+		export JAVA_HOME=`type -p javac|xargs readlink -f|xargs dirname|xargs dirname`
 		cd /var/jetendo-server/system/apr-build/
 		# get the newest tomcat native library source here: http://tomcat.apache.org/download-native.cgi
-		wget http://apache.mirrors.ionfish.org/tomcat/tomcat-connectors/native/1.2.16/source/tomcat-native-1.2.16-src.tar.gz
-		tar -xvzf tomcat-native-1.2.16-src.tar.gz
-		cd tomcat-native-1.2.16-src/native/
-		./configure --with-apr=/usr/local/apr/bin/ --with-ssl=/usr/include/openssl --with-java-home=/usr/lib/jvm/java-8-oracle && make && make install
+		wget http://mirrors.gigenet.com/apache/tomcat/tomcat-connectors/native/1.2.17/source/tomcat-native-1.2.17-src.tar.gz
+		tar -xvzf tomcat-native-1.2.17-src.tar.gz
+		cd tomcat-native-1.2.17-src/native/
+		./configure --with-apr=/usr/local/apr/bin/ --with-ssl=/root/openssltemp/openssl-1.1.1-pre8 --with-java-home=/usr/lib/jvm/java-11-openjdk-amd64
+		make && make install
 		
-	Install lucee from newest tomcat x64 binary release on www.lucee.org
-		mkdir /var/jetendo-server/system/lucee/
-		cd /var/jetendo-server/system/lucee/
-		download lucee linux x64 tomcat from http://lucee.org/ and upload to /var/jetendo-server/system/lucee/
+	Install tomcat 9.0.10 manually instead of lucee installer?
+		https://www.digitalocean.com/community/tutorials/install-tomcat-9-ubuntu-1804
+		cd /var/jetendo-server/system/lucee/temp
+		wget http://mirror.cc.columbia.edu/pub/software/apache/tomcat/tomcat-9/v9.0.10/bin/apache-tomcat-9.0.10.tar.gz
+		mkdir /var/jetendo-server/tomcat
+		tar xzvf /var/jetendo-server/system/lucee/temp/apache-tomcat-9*.tar.gz -C /var/jetendo-server/tomcat --strip-components=1
+		cd /var/jetendo-server/tomcat
+		chown -R www-data:www-data /var/jetendo-server/tomcat/
+		chmod -R 770 /var/jetendo-server/tomcat/ 
+		vi /etc/systemd/system/tomcat.service
 		
-		chmod 770 the installer file.
+	Install tomcat 8.5.32 manually
+		cd /var/jetendo-server/system/lucee/temp
+		wget http://mirrors.gigenet.com/apache/tomcat/tomcat-8/v8.5.32/bin/apache-tomcat-8.5.32.tar.gz
+		tar xzvf apache-tomcat-8.5*.tar.gz -C /var/jetendo-server/tomcat --strip-components=1
+		cd /var/jetendo-server/tomcat
+		rm -rf /var/jetendo-server/luceevhosts/*
+		mkdir /var/jetendo-server/luceevhosts/server /var/jetendo-server/luceevhosts/tomcat-logs
+		chown -R www-data:www-data /var/jetendo-server/tomcat
+		chmod -R 770 /var/jetendo-server/tomcat
+		 
+[Unit]
+Description=Apache Tomcat Web Application Container
+After=network.target
+
+[Service]
+Type=forking
+
+Environment=JAVA_HOME=/usr/lib/jvm/java-10-oracle
+Environment=CATALINA_PID=/var/jetendo-server/tomcat/temp/tomcat.pid
+Environment=CATALINA_HOME=/var/jetendo-server/tomcat
+Environment=CATALINA_BASE=/var/jetendo-server/tomcat
+# might have to disable javaagent if it fails temporarily
+Environment='CATALINA_OPTS=-Xms512M -Xmx1268M -server -XX:+UseParallelGC -Djava.library.path=/usr/local/apr/lib -javaagent:/var/jetendo-server/tomcat/lucee-server/context/lucee-external-agent.jar'
+Environment='JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
+# fix java 9/10 error in Lucee Admin
+Environment='JDK_JAVA_OPTIONS=--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED'
+
+ExecStart=/var/jetendo-server/tomcat/bin/startup.sh
+ExecStop=/var/jetendo-server/tomcat/bin/shutdown.sh
+
+User=tomcat
+Group=tomcat
+UMask=0007
+RestartSec=10
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+		 
 		
-		#shutdown and disable Lucee if it is installed.
-		service lucee_ctl stop
-		echo manual | sudo tee /etc/init/lucee_ctl.override
-		
-		run the installer file
-		When it asks for the user to run lucee as, type in: www-data
-		Installation Directory /var/jetendo-server/lucee
-		Start lucee at boot time: Y
-		Don't allow installation of apache connectors: n
-		Remember to write down password for Tomcat/lucee administrator.
-		
-		Edit /etc/init.d/lucee_ctl
-			Before echo "[DONE]" in the start function add these lines where company domain is one of the main domain setup in jetendo for the server administrator.
+		// replace server.xml and web.xml with the lucee ones which use the luceevhosts directory instead of lucee 
+		// upload latest lucee.org snapshot jar to /var/jetendo-server/tomcat/lib/
+		systemctl daemon-reload
+		systemctl restart tomcat
+		systemctl enable tomcat
+		visit server and web admin to setup the rest including the first time password
+		http://dev.127.0.0.2.nip.io:8888/lucee/admin/server.cfm
+		 
+		Edit /var/jetendo-server/tomcat/bin/catalina.sh
+			Immediately after "echo "Tomcat started."", add these lines where company domain is one of the main domain setup in jetendo for the server administrator.
+				
+				IMPORTANT: Make sure to change these to your test domain if you aren't using nip.io
 				
 				Test Server:
 					printf "\nLoading Jetendo Application\n"
@@ -379,7 +413,8 @@ Install lucee
 					printf "\n[DONE]"
 			
 		# prevent lucee from starting on boot (requires that jetendo-start.php init script is installed and configured - documentation is incomplete for this)
-		echo manual | sudo tee /etc/init/lucee_ctl.override
+		systemctl disable lucee_ctl
+	#	echo manual | sudo tee /etc/init/lucee_ctl.override
 		
 		This forces the request that loads jetendo to occur on each restart of Lucee.
 		
@@ -391,7 +426,7 @@ Install lucee
 		service lucee_ctl stop
 		mv /var/jetendo-server/lucee/jdk/jre /var/jetendo-server/lucee/jdk/jre-original
 		mkdir /var/jetendo-server/lucee/jdk/jre
-		/bin/cp -rf /usr/lib/jvm/java-8-oracle/jre/* /var/jetendo-server/lucee/jdk/jre
+		/bin/cp -rf /usr/lib/jvm/java-10-oracle/jre/* /var/jetendo-server/lucee/jdk/jre
 		chown -R www-data:www-data /var/jetendo-server/lucee/
 		chmod -R 770 /var/jetendo-server/lucee/
 
@@ -406,31 +441,22 @@ Install lucee
 	cp -rf /var/jetendo-server/lucee/lib/* /var/jetendo-server/luceevhosts/server/
 	chown -R www-data:www-data /var/jetendo-server/luceevhosts/
 	chmod -R 770 /var/jetendo-server/luceevhosts/
-
-	lucee config backup
-		mkdir /var/jetendo-server/system/lucee/temp/
-		cp /var/jetendo-server/lucee/tomcat/conf/server.xml /var/jetendo-server/system/lucee/temp/
-		cp /var/jetendo-server/lucee/tomcat/conf/web.xml /var/jetendo-server/system/lucee/temp/
-		cp /var/jetendo-server/lucee/tomcat/conf/logging.properties /var/jetendo-server/system/lucee/temp/
-		cp /var/jetendo-server/lucee/tomcat/bin/setenv.sh /var/jetendo-server/system/lucee/temp/
-		
+ 
 	# install the server.xml for production or development
 		# development
-		cp /var/jetendo-server/system/lucee/server-development.xml /var/jetendo-server/lucee/tomcat/conf/server.xml
-		cp /var/jetendo-server/system/lucee/web-development.xml /var/jetendo-server/lucee/tomcat/conf/web.xml
-		cp /var/jetendo-server/system/lucee/logging-development.properties /var/jetendo-server/lucee/tomcat/conf/logging.properties
-		cp /var/jetendo-server/system/lucee/setenv-development.sh /var/jetendo-server/lucee/tomcat/bin/setenv.sh
+		cp /var/jetendo-server/system/lucee/server-development.xml /var/jetendo-server/tomcat/conf/server.xml
+		cp /var/jetendo-server/system/lucee/web-development.xml /var/jetendo-server/tomcat/conf/web.xml
+		cp /var/jetendo-server/system/lucee/logging-development.properties /var/jetendo-server/tomcat/conf/logging.properties
+		cp /var/jetendo-server/system/lucee/setenv-development.sh /var/jetendo-server/tomcat/bin/setenv.sh
 		# production
-		cp /var/jetendo-server/system/lucee/server-production.xml /var/jetendo-server/lucee/tomcat/conf/server.xml
-		cp /var/jetendo-server/system/lucee/web-production.xml /var/jetendo-server/lucee/tomcat/conf/web.xml
-		cp /var/jetendo-server/system/lucee/logging-production.properties /var/jetendo-server/lucee/tomcat/conf/logging.properties
-		cp /var/jetendo-server/system/lucee/setenv-production.sh /var/jetendo-server/lucee/tomcat/bin/setenv.sh
+		cp /var/jetendo-server/system/lucee/server-production.xml /var/jetendo-server/tomcat/conf/server.xml
+		cp /var/jetendo-server/system/lucee/web-production.xml /var/jetendo-server/tomcat/conf/web.xml
+		cp /var/jetendo-server/system/lucee/logging-production.properties /var/jetendo-server/tomcat/conf/logging.properties
+		cp /var/jetendo-server/system/lucee/setenv-production.sh /var/jetendo-server/tomcat/bin/setenv.sh
 		
 	
-	service lucee_ctl start
-	
 	vi /etc/logrotate.d/tomcat
-	/var/jetendo-server/lucee/tomcat/logs/catalina.out {
+	/var/jetendo-server/tomcat/logs/catalina.out {
 		copytruncate
 		daily
 		rotate 7
@@ -451,39 +477,11 @@ Install lucee
 	}
 	
 	
-	http://dev.com.127.0.0.2.xip.io:8888/lucee/admin/web.cfm?action=resources.mappings
+	service lucee_ctl start
 	
-	
-	NO LONGER NEED THESE PATCH NOTES in newer versions of lucee: Lucee has been patched in order to fix some things.  Here are the notes to re-create the patch until there is an official fix.
-			learn how to build and deploy a patched version of lucee from source before making any changes:
-				https://bitbucket.org/lucee/lucee/wiki/Build_from_source
-				
-			Edit version to be higher then what you're using:
-			/lucee-java/lucee-core/src/lucee/runtime/Info.ini 
-		
-			farbeyondcode multiple file upload - no micha refused my patch
-				
-		fix for multiple file uploads:
-			C:\ServerData\lucee-build\lucee-java\lucee-core\src\lucee\runtime\type\scope\FormImpl.java
-			line 1: 184: change:
-				fileItems.put(item.getFieldName().toLowerCase(),
-			to:
-				fileItems.put(getFileName(),
-			
-		fix for objectload/objectsave of functions outside a cfc.
-			C:\ServerData\Lucee4\lucee-java\lucee-core\src\lucee\runtime\type\UDFPropertiesImpl.java
-			out.writeObject(cachedWithin); 
-			cachedWithin = in.readObject();
-	
-		make ant in path or use the commands below in command prompt.  http://ant.apache.org/manual/index.html
-			
-			# where Lucee4 is the java github project for current version of Lucee
-			cd C:\ServerData\Lucee4
-			set JAVA_HOME=C:\Program Files\Java\jdk1.7.0_25
-			"C:\ServerData\apache-ant-1.9.6\bin\ant" core
-			
-			then locate patch file in "dist/"
-	
+	http://dev.com.127.0.0.2.nip.io:8888/lucee/admin/web.cfm?action=resources.mappings
+	 
+	 
 Install node.js 0.12.x using nodesource PPA
 	apt-get install apt-transport-https
 	wget -qO- https://deb.nodesource.com/setup_0.12 | bash -
@@ -495,13 +493,7 @@ Install node.js 0.12.x using nodesource PPA
 	
 	node -v
 	handlebars -v
-	
-Install Coldfusion 9.0.2 (Jetendo CMS uses Lucee exclusively, Coldfusion installation is optional)
-	apt-get install libstdc++5
-	download coldfusion 9 developer editing linux 64-bit from adobe: http://www.adobe.com/support/coldfusion/downloads_updates.html#cf9
-	/var/jetendo-server/system/coldfusion/install/ColdFusion_9_WWEJ_linux64.bin
-	http://127.0.0.2:8500/CFIDE/administrator/index.cfm
-	
+	 
 Download Install Newest Intel Ethernet Adapter Driver If Production Server Use Intel Device
 	lspci | grep -i eth
 	
@@ -531,7 +523,6 @@ Enable the php configuration module:
 	service php7.2-fpm restart
 	
 # development server symbolic link configuration
-	ln -sfn /var/jetendo-server/system/jetendo-mysql-development.cnf /etc/mysql/conf.d/jetendo-mysql-development.cnf 
 	ln -sfn /var/jetendo-server/system/nginx-conf/nginx-development.conf /var/jetendo-server/nginx/conf/nginx.conf
 	ln -sfn /var/jetendo-server/system/jetendo-sysctl-development.conf /etc/sysctl.d/jetendo-sysctl-development.conf
 	ln -sfn /var/jetendo-server/system/monit/jetendo-development.conf /etc/monit/conf.d/jetendo.conf
@@ -575,18 +566,18 @@ chmod +x /etc/init.d/nginx
 
 # increase security limits
 	vi /etc/security/limits.conf
-		* soft nofile 32768
-		* hard nofile 32768
-		root soft nofile 32768
-		root hard nofile 32768
-		* soft memlock unlimited
-		* hard memlock unlimited
-		root soft memlock unlimited
-		root hard memlock unlimited
-		* soft as unlimited
-		* hard as unlimited
-		root soft as unlimited
-		root hard as unlimited
+* soft nofile 32768
+* hard nofile 32768
+root soft nofile 32768
+root hard nofile 32768
+* soft memlock unlimited
+* hard memlock unlimited
+root soft memlock unlimited
+root hard memlock unlimited
+* soft as unlimited
+* hard as unlimited
+root soft as unlimited
+root hard as unlimited
 
 # reboot system to have all changes take effect.	
 reboot
@@ -652,8 +643,9 @@ Enable hardware random number generator on non-virtual machine.  This is not saf
 		apt-get install haveged
 	
 manually download the latest 64-bit stable linux version of wkhtmltopdf on the website: http://wkhtmltopdf.org/downloads.html
+	wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox_0.12.5-1.bionic_amd64.deb
 	apt-get install xfonts-base xfonts-75dpi
-	dpkg -i /root/wkhtmltox-0.12.2.1_linux-trusty-amd64.deb
+	dpkg -i /root/wkhtmltox_0.12.5-1.bionic_amd64.deb
 	
 	
 Configure Jungledisk (Optional)
@@ -696,11 +688,16 @@ Configuring Static IPs
 	
 	# Be careful, you may accidentally take your server off the Internet if you make a mistake.  It is best to do this with KVM access or have the hosting company help you.
 	
-	# By default, Virtualbox is configured to use NAT, and this configuration looks like this in /etc/network/interfaces after installing ubuntu
-		auto eth0
-		iface eth0 inet dhcp
+	# By default, Virtualbox is configured to use NAT, and this configuration looks like this in /etc/netplan/50-cloud-init.yaml after installing ubuntu
+		network:
+			ethernets:
+				enp0s3:
+					addresses: []
+					dhcp4: true
+			version: 2
+
 	
-	# To replace NAT with a static IP for same interface, delete "auto eth0" and "iface eth0 inet dhcp" and use the settings below.  Make sure the IPs match what is provided by your ISP.  The DNS Nameservers should ideally be your ISP's nameservers for best performance or google public dns which is: 8.8.8.8 8.8.4.4
+	TODO: NEED NEW netplan SYNTAX FOR LIVE SERVER: # To replace NAT with a static IP for same interface, delete "auto eth0" and "iface eth0 inet dhcp" and use the settings below.  Make sure the IPs match what is provided by your ISP.  The DNS Nameservers should ideally be your ISP's nameservers for best performance or google public dns which is: 8.8.8.8 8.8.4.4
 		auto eth0
 		iface eth0 inet static
 		address 192.168.0.2
@@ -735,9 +732,9 @@ Configuring Static IPs
 		network 192.168.0.0
 		broadcast 192.168.0.255
 
-Visit http://xip.io/ to understand how this free service helps you create development environments with minimal re-configuration.
+Visit http://nip.io/ to understand how this free service helps you create development environments with minimal re-configuration.
 	Essentially it automates dns configuration, to let you create new domains instantly that point to any ip address you desire.
-	http://mydomain.com.127.0.0.1.xip.io/ would attempt to connection to 127.0.0.1 with the host name mydomain.com.127.0.0.1.xip.io. 
+	http://mydomain.com.127.0.0.1.nip.io/ would attempt to connection to 127.0.0.1 with the host name mydomain.com.127.0.0.1.nip.io. 
 	Jetendo has been designed to support this service by default.
 	
 	You can also use nip.io the same way.
@@ -760,6 +757,9 @@ By default, this is not needed.  If you want additional pools, add them like thi
 	for devsite1.com, nginx uses
 		fastcgi_pass unix:/var/jetendo-server/php/run/fpm.devsite1.sock;
 
+speed up shutdown by disabling network printing service
+	systemctl disable cups-browsed.service
+		
 Reboot the virtual machine to ensure all services are installed and running before continuing with Jetendo CMS installation
 	At a shell prompt, type: 
 		reboot
@@ -785,7 +785,7 @@ Configure Jetendo CMS
 	Add the following mappings to the Lucee web admin for the /var/jetendo-server/jetendo/ context:
 		Lucee web admin URL for VirtualBox (create a new password if it asks.)
 		
-		http://dev.com.127.0.0.2.xip.io:8888/lucee/admin/web.cfm?action=resources.mappings
+		http://dev.com.127.0.0.2.nip.io:8888/lucee/admin/web.cfm?action=resources.mappings
 	
 		The resource path for "/zcorecachemapping" must be the sites-writable path for the adminDomain.
 		For example, if request.zos.adminDomain = "http://jetendo.your-company.com";
@@ -807,7 +807,7 @@ Configure Jetendo CMS
 		Resource Path: /var/jetendo-server/jetendo/database-upgrade
 	
 	Setup the Jetendo datasource - the database, datasource, jetendo_datasource, and request.zos.zcoreDatasource must all be the same name.
-		http://dev.com.127.0.0.2.xip.io:8888/lucee/admin/web.cfm?action=services.datasource
+		http://dev.com.127.0.0.2.nip.io:8888/lucee/admin/web.cfm?action=services.datasource
 		Add mysql datasource named "jetendo" or whatever you've configured it to be in the jetendo config files.
 			host: 127.0.0.1
 			Required options: 
@@ -824,15 +824,15 @@ Configure Jetendo CMS
 
 	
 	Enable complete null support and set Key case to Preserve Case (fixes javascript case problems) and Template charset to UTF-8:
-		http://dev.com.127.0.0.2.xip.io:8888/lucee/admin/server.cfm?action=server.compiler
+		http://dev.com.127.0.0.2.nip.io:8888/lucee/admin/server.cfm?action=server.compiler
 		
 	Enable mail server:
-		http://dev.com.127.0.0.2.xip.io:8888/lucee/admin/server.cfm?action=services.mail
+		http://dev.com.127.0.0.2.nip.io:8888/lucee/admin/server.cfm?action=services.mail
 		
 		Under Mail Servers -> Server (SMTP), type "localhost" and click update"
 		
 	Configure Lucee security sandbox - Warning: Upgrading Lucee has caused the security sandbox to be deleted in the past.  Be sure to review it periodically.
-		http://jetendo.your-company.com.127.0.0.2.xip.io:8888/lucee/admin/server.cfm?action=security.access&sec_tab=SPECIAL
+		http://jetendo.your-company.com.127.0.0.2.nip.io:8888/lucee/admin/server.cfm?action=security.access&sec_tab=SPECIAL
 		Under Create new context, select "b180779e6dc8f3bb6a8ea14a604d83d4 (/var/jetendo-server/jetendo/sites)" and click Create
 		Then click edit next to the specific web context
 		On a production server, set General Access for read and write to "closed" when you don't need to access the Lucee admin.   You can re-enable it only when you need to make changes.
