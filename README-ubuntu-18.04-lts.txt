@@ -2,6 +2,7 @@ TODO:
 	important, i left monit disabled
 	i didn't finish apparmor for new tomcat
 	I could use ZFS still in a new version for better disk usage and backup.
+	php7.2-fpm is not able to start
 
 Jetendo Server Installation Documentation
 OS: Ubuntu Server 18.04 LTS
@@ -318,6 +319,7 @@ TODO STOPPED HERE:
 		font/opentype                      otf;
 		
 	
+	
 Install lucee
 	Compile and Install Apache APR Library
 		mkdir /var/jetendo-server/system/apr-build/
@@ -348,16 +350,6 @@ Install lucee
 		chown -R www-data:www-data /var/jetendo-server/tomcat/
 		chmod -R 770 /var/jetendo-server/tomcat/ 
 		vi /etc/systemd/system/tomcat.service
-		
-	Install tomcat 8.5.32 manually
-		cd /var/jetendo-server/system/lucee/temp
-		wget http://mirrors.gigenet.com/apache/tomcat/tomcat-8/v8.5.32/bin/apache-tomcat-8.5.32.tar.gz
-		tar xzvf apache-tomcat-8.5*.tar.gz -C /var/jetendo-server/tomcat --strip-components=1
-		cd /var/jetendo-server/tomcat
-		rm -rf /var/jetendo-server/luceevhosts/*
-		mkdir /var/jetendo-server/luceevhosts/server /var/jetendo-server/luceevhosts/tomcat-logs
-		chown -R www-data:www-data /var/jetendo-server/tomcat
-		chmod -R 770 /var/jetendo-server/tomcat
 		 
 [Unit]
 Description=Apache Tomcat Web Application Container
@@ -388,6 +380,23 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 
+	update root certificates cacert
+		cd /usr/local/share/ca-certificates/
+		wget http://curl.haxx.se/ca/cacert.pem
+		update-ca-certificates
+		dpkg-reconfigure ca-certificates
+			say yes and ok.
+			
+		add this to /var/jetendo-server/system/php/jetendo.ini
+			[curl]
+			; A default value for the CURLOPT_CAINFO option. This is required to be an
+			; absolute path.
+			curl.cainfo ="/usr/local/share/ca-certificates/cacert.pem"
+		service php7.2-fpm restart
+		 
+		for tomcat 9 and java 10, use this command instead and say yes:
+			/usr/bin/keytool -import -keystore /usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts -trustcacerts -file /usr/local/share/ca-certificates/cacert.pem -storepass changeit
+		
 		 
 		
 		// replace server.xml and web.xml with the lucee ones which use the luceevhosts directory instead of lucee 
