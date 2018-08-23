@@ -5,6 +5,7 @@
   #include <abstractions/base>
   #include <abstractions/nameservice>
   #include <abstractions/nis>
+	#include <abstractions/lxc/container-base>
 
   capability dac_override,
   capability net_bind_service,
@@ -42,6 +43,8 @@
   /var/jetendo-server/nginx/html/** r,
     /run/nginx.pid rw,
     /run/nginx.pid.oldbin w,
+    /run/php/php7.2-fpm.sock rw,
+    /var/run/php/php7.2-fpm.sock rw,
     /run/php/php7.0-fpm.sock rw,
     /var/run/php/php7.0-fpm.sock rw,
 	/usr/local/lib/libz.so.* mr,

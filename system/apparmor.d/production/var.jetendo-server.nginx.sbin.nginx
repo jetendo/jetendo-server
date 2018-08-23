@@ -5,6 +5,7 @@
   #include <abstractions/base>
   #include <abstractions/nameservice>
   #include <abstractions/nis>
+	#include <abstractions/lxc/container-base>
 
   capability dac_override,
   capability net_bind_service,

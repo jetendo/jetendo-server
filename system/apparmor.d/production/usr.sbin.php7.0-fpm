@@ -2,18 +2,35 @@
 #include <tunables/global>
 
 /usr/sbin/php-fpm7.0 {
-  #include <abstractions/base>
-  #include <abstractions/nameservice>
-
-  capability kill,
-  capability setgid,
-  capability setuid,
-  capability chown,
-  capability dac_override,
-  capability dac_read_search,
-  /bin/dash rix,
+	#include <abstractions/base>
+	#include <abstractions/nameservice>
+	#include <abstractions/fonts>
+	#include <abstractions/lxc/container-base>
+	capability net_admin,
+	capability kill,
+	capability setgid,
+	capability setuid,
+	capability chown,
+	capability dac_override,
+	capability dac_read_search,
+	/bin/dash rix,
+  
+	/bin/hostname rix,
+	/etc/ImageMagick/*.xml r,
+	/usr/bin/gs rix,
+	/usr/share/ImageMagick-*/*.xml r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/system/GenPreview.php r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/system/Generate.php r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/system/InsertImage.php r,
+	/var/jetendo-server/jetendo/sites-writable/sq/zupload/site-options/* r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/3d/* r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/fonts/** r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/system/library/mysql.lib.php r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/system/library/phpmailer.module.php r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/upload/** r,
   /var/jetendo-server/jetendo/sites-writable/*/client-upload/** rw,
  
+  /etc/ssl/openssl.cnf r,
   /etc/mailname r,
   /etc/postfix/dynamicmaps.cf r,
   /usr/sbin/postdrop rix,
