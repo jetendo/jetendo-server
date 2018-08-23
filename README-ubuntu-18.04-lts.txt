@@ -177,6 +177,10 @@ Log out and login as root using ssh for the rest of the instructions.
 # update hostname
 	for development environment, make sure /etc/hostname matches the value used in the Jetendo configuration for the testDomain affix.  I.e. jetendo.127.0.0.2.nip.io
 	
+	hostnamectl set-hostname jetendo.test.zsite.info
+	change contents of /etc/hostname to jetendo.test.zsite.info
+	vi /etc/cloud/cloud.cfg
+		change preserve_hostname to true
 
 # If this is a virtual machine: Add the contents of /jetendo-server/system/jetendo-fstab.conf and copy the file to /etc/fstab, then run
 	mkdir /var/jetendo-server/
