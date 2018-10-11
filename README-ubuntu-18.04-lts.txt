@@ -220,6 +220,8 @@ CONTINUE HERE
 	# accept defaults for all installers - when postfix installer prompts you, i.e. OK, Internet Site
 	
 Configure MariaDB
+	Important Note: Mariadb doesn't appear to work when the datadir is in a Virtualbox Shared Folder anymore.  For virtual machines where you want to separate the datadir, you must use a vdi file instead.
+
 	service mysql stop
 	#make sure mysql shared folder is mounted if using virtualbox
 		mount -a
@@ -251,6 +253,22 @@ Configure Apache2 (Note: Jetendo CMS uses Nginx exclusive, Apache configuration 
 	To re-enable:
 		update-rc.d apache2 enable
 		service apache2 start
+		
+Imagemagick 6.9 is the default, but we might need Imagemagick 7, which requires compilation.  You don't have to uninstall the other imagemagick.  These are the steps to do it:
+	add line below to: /etc/apt/sources.list
+		deb-src http://archive.ubuntu.com/ubuntu/ bionic main restricted
+	apt-get update
+	apt-get build-dep imagemagick
+	wget https://www.imagemagick.org/download/ImageMagick.tar.gz
+	tar xf ImageMagick.tar.gz
+	cd ImageMagick-7*
+
+	./configure
+	make
+	make install
+	ldconfig /usr/local/lib
+	identify -version
+	
 	
 Install OpenSSL 1.1.1+ for TLS 1.3 and more
 	mkdir /root/openssltemp
@@ -269,8 +287,6 @@ Install OpenSSL 1.1.1+ for TLS 1.3 and more
 Install Required Software From Source
 	Nginx
 		mkdir /root/nginx-build
-		
-TODO STOPPED HERE:		
 		cd /root/nginx-build
 		wget http://nginx.org/download/nginx-1.15.2.tar.gz
 		tar xvfz nginx-1.15.2.tar.gz
@@ -286,6 +302,69 @@ TODO STOPPED HERE:
 			wget https://github.com/agentzh/set-misc-nginx-module/archive/master.zip
 			unzip master.zip -d /root/nginx-build/
 			rm master.zip
+			
+			wget https://github.com/fdintino/nginx-upload-module/archive/master.zip
+			unzip master.zip -d /root/nginx-build/
+			rm master.zip
+			
+			#embed java into nginx
+			wget https://github.com/nginx-clojure/nginx-clojure/archive/master.zip
+			unzip master.zip -d /root/nginx-build/
+			rm master.zip
+			
+			#need java 8 due to use of UNSAFE
+			apt install openjdk-8-jre-headless
+			
+				# because of new version of gcc, I had to change comments that we /*no break*/ to /*fallthrough*/ in these 2 files to get the warnings to go away for make:
+					/root/nginx-build/nginx-clojure-master/src/c/ngx_http_clojure_mem.c
+					/root/nginx-build/nginx-clojure-master/src/c/ngx_http_clojure_shared_map_hashmap.c
+			
+			
+				#maybe this is needed:
+					apt install leiningen
+					cd /root/nginx-build/nginx-clojure-master/
+					lein jar
+		
+		
+			to get java started on nginx start :
+				nginx config
+				http {
+				......
+					jvm_handler_type 'java'; # or handler_type 'groovy'
+					jvm_init_handler_name 'my.test/InitHandler'; 
+				....
+				}
+				java class:
+					public static class JVMInitHandler implements NginxJavaRingHandler {
+						@Override
+						public Object[] invoke(Map<String, Object> ctx) {
+							NginxClojureRT.log.info("JVMInitHandler invoked!");
+							return null; // or return new Object[] {500, null, null}; for  an error
+						}
+					}
+				
+				
+				hello world response handler:
+					package mytest;
+					import static nginx.clojure.MiniConstants.*;
+
+					import java.util.HashMap;
+					import java.util.Map;
+					public  class Hello implements NginxJavaRingHandler {
+
+							@Override
+							public Object[] invoke(Map<String, Object> request) {
+								return new Object[] { 
+										NGX_HTTP_OK, //http status 200
+										ArrayMap.create(CONTENT_TYPE, "text/plain"), //headers map
+										"Hello, Java & Nginx!"  //response body can be string, File or Array/Collection of them
+										};
+							}
+						}
+				location /myJava {
+				  content_handler_type 'java';
+				  content_handler_name 'mytest.Hello';
+				}
 		
 		#compile and install zlib library
 			wget http://zlib.net/zlib-1.2.11.tar.gz
@@ -297,13 +376,15 @@ TODO STOPPED HERE:
 			
 			
 		cd /root/nginx-build/nginx-1.15.2/
-		./configure --with-openssl=/root/openssltemp/openssl-1.1.1-pre8 --with-openssl-opt=enable-tls1_3 --with-http_realip_module  --with-http_v2_module --prefix=/var/jetendo-server/nginx --user=nginx --group=nginx --with-http_ssl_module --with-http_gzip_static_module  --with-http_flv_module --with-http_mp4_module --with-http_stub_status_module  --add-module=/root/nginx-build/ngx_devel_kit-master --add-module=/root/nginx-build/set-misc-nginx-module-master
+		./configure --with-openssl=/root/openssltemp/openssl-1.1.1-pre8 --with-openssl-opt=enable-tls1_3 --with-http_realip_module  --with-http_v2_module --prefix=/var/jetendo-server/nginx --user=nginx --group=nginx --with-http_ssl_module --with-http_gzip_static_module  --with-http_flv_module --with-http_mp4_module --with-http_stub_status_module --add-module=/root/nginx-build/nginx-upload-module-master  --add-module=/root/nginx-build/ngx_devel_kit-master --add-module=/root/nginx-build/set-misc-nginx-module-master --add-module=/root/nginx-build/nginx-clojure-master/src/c
+		
+		# didn't build: 
 		make
 		make install
 		cd /var/jetendo-server/nginx
-		mkdir cache client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp ssl
-		chown www-data:root cache client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp
-		chmod 770 cache client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp
+		mkdir cache client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp ssl upload_temp
+		chown www-data:root cache client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp upload_temp
+		chmod 770 cache client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp upload_temp
 		chmod -R 400 ssl
 		mkdir /var/jetendo-server/nginx/conf/sites/
 		mkdir /var/jetendo-server/nginx/conf/sites/jetendo/

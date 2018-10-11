@@ -53,7 +53,7 @@ join_buffer_size = 128K
 group_concat_max_len = 4000000
 max_allowed_packet=20000000
 innodb_use_native_aio=0
-
+thread_handling=pool-of-threads
 # used with mariadb 10
 #innodb_buffer_pool_dump_at_shutdown=1
 #innodb_buffer_pool_load_at_startup=1

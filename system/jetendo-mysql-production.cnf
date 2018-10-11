@@ -139,6 +139,7 @@ innodb_data_home_dir = /var/jetendo-server/mysql/logs/
 innodb_log_group_home_dir  = /var/jetendo-server/mysql/logs/
 innodb_data_file_path=ibdata1:50M;ibdata2:50M:autoextend:max:500M
 aria_log_dir_path = /var/jetendo-server/mysql/logs/
+thread_handling=pool-of-threads
 
 # used with mariadb 10
 innodb_buffer_pool_dump_at_shutdown=1

@@ -3,8 +3,7 @@
 
 /usr/bin/mysql {
   #include <abstractions/base>
-  #include <abstractions/nameservice>
-	#include <abstractions/lxc/container-base>
+  #include <abstractions/nameservice> 
 
   capability dac_override,
   

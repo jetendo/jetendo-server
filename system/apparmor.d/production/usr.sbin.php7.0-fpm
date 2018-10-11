@@ -4,8 +4,7 @@
 /usr/sbin/php-fpm7.0 {
 	#include <abstractions/base>
 	#include <abstractions/nameservice>
-	#include <abstractions/fonts>
-	#include <abstractions/lxc/container-base>
+	#include <abstractions/fonts> 
 	capability net_admin,
 	capability kill,
 	capability setgid,
@@ -19,15 +18,37 @@
 	/etc/ImageMagick/*.xml r,
 	/usr/bin/gs rix,
 	/usr/share/ImageMagick-*/*.xml r,
+	/var/jetendo-server/jetendo/sites/sq_zsite_info/customizer/system/GenPreview.php r,
+	/var/jetendo-server/jetendo/sites/sq_zsite_info/customizer/system/Generate.php r,
+	/var/jetendo-server/jetendo/sites/sq_zsite_info/customizer/system/GenImage.php r,
+	/var/jetendo-server/jetendo/sites/sq_zsite_info/customizer/system/GenBack.php r,
+	/var/jetendo-server/jetendo/sites/sq_zsite_info/customizer/system/GenText.php r,
+	/var/jetendo-server/jetendo/sites/sq_zsite_info/customizer/system/InsertImage.php r,
+	/var/jetendo-server/jetendo/sites-writable/sq_zsite_info/** r,
+	/var/jetendo-server/jetendo/sites-writable/sq_zsite_info/imagick-temp/** rw,
+	/var/jetendo-server/jetendo/sites-writable/sq_zsite_info/zupload/** rw,
+	/zbackup2/jetendo/sites-writable/sq_zsite_info/** r,
+	/zbackup2/jetendo/sites-writable/sq_zsite_info/zupload/** rw,
+	/var/jetendo-server/jetendo/sites/sq_zsite_info/customizer/3d/* r,
+	/var/jetendo-server/jetendo/sites/sq_zsite_info/customizer/fonts/** r, 
+	/var/jetendo-server/jetendo/sites/sq_zsite_info/customizer/upload/** r,
+	/var/jetendo-server/jetendo/sites/sq_zsite_info/customizer/system/customizer-library.php r,
+	
+	/var/jetendo-server/jetendo/execute/start/* rw,
+	/var/jetendo-server/jetendo/execute/complete/* rw,
+	
+	/var/jetendo-server/jetendo/sites/sq/customizer/system/customizer-library.php r,
 	/var/jetendo-server/jetendo/sites/sq/customizer/system/GenPreview.php r,
 	/var/jetendo-server/jetendo/sites/sq/customizer/system/Generate.php r,
-	/var/jetendo-server/jetendo/sites/sq/customizer/system/InsertImage.php r,
-	/var/jetendo-server/jetendo/sites-writable/sq/zupload/site-options/* r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/system/GenImage.php r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/system/GenBack.php r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/system/GenText.php r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/system/InsertImage.php r, 
+	/var/jetendo-server/jetendo/sites-writable/sq/zupload/** rw,
 	/var/jetendo-server/jetendo/sites/sq/customizer/3d/* r,
-	/var/jetendo-server/jetendo/sites/sq/customizer/fonts/** r,
-	/var/jetendo-server/jetendo/sites/sq/customizer/system/library/mysql.lib.php r,
-	/var/jetendo-server/jetendo/sites/sq/customizer/system/library/phpmailer.module.php r,
+	/var/jetendo-server/jetendo/sites/sq/customizer/fonts/** r, 
 	/var/jetendo-server/jetendo/sites/sq/customizer/upload/** r,
+	
   /var/jetendo-server/jetendo/sites-writable/*/client-upload/** rw,
  
   /etc/ssl/openssl.cnf r,

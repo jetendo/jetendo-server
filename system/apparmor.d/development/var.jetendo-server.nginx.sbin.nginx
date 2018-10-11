@@ -32,6 +32,8 @@
   /var/jetendo-server/nginx/scgi_temp/** rw,
   /var/jetendo-server/nginx/ssl/** r,
   /var/jetendo-server/nginx/uwscgi_temp/** rw,
+  /var/jetendo-server/nginx/sbin/libs/** r,
+  /var/jetendo-server/nginx/upload_temp/** rw,
   /var/jetendo-server/backup/jetendo/share/mls-images/** r,
   /var/jetendo-server/system/nginx-conf/** r,
   /var/jetendo-server/nginx/sites/ r,

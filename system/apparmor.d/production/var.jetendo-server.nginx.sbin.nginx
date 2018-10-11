@@ -4,8 +4,7 @@
 /var/jetendo-server/nginx/sbin/nginx {
   #include <abstractions/base>
   #include <abstractions/nameservice>
-  #include <abstractions/nis>
-	#include <abstractions/lxc/container-base>
+  #include <abstractions/nis> 
 
   capability dac_override,
   capability net_bind_service,
