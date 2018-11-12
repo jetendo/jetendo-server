@@ -29,6 +29,7 @@ railovhosts
 luceevhosts
 logs/*
 shared/*
+system/lucee/temp
 
 #################
 ## Eclipse
