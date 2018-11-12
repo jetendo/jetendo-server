@@ -36,6 +36,7 @@
 	
 	/var/jetendo-server/jetendo/execute/start/* rw,
 	/var/jetendo-server/jetendo/execute/complete/* rw,
+	/var/jetendo-server/jetendo/execute/active/* rw,
 	
 	/var/jetendo-server/jetendo/sites/sq/customizer/system/customizer-library.php r,
 	/var/jetendo-server/jetendo/sites/sq/customizer/system/GenPreview.php r,

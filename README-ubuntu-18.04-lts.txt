@@ -273,9 +273,9 @@ Imagemagick 6.9 is the default, but we might need Imagemagick 7, which requires 
 Install OpenSSL 1.1.1+ for TLS 1.3 and more
 	mkdir /root/openssltemp
 	cd /root/openssltemp
-	wget https://www.openssl.org/source/openssl-1.1.1-pre8.tar.gz
-	tar xvf openssl-1.1.1-pre8.tar.gz
-	cd openssl-1.1.1-pre8
+	wget https://www.openssl.org/source/openssl-1.1.1.tar.gz
+	tar xvf openssl-1.1.1.tar.gz
+	cd openssl-1.1.1
 	./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl -Wl,-rpath,/usr/local/ssl/lib
 	make
 	make install
@@ -288,8 +288,8 @@ Install Required Software From Source
 	Nginx
 		mkdir /root/nginx-build
 		cd /root/nginx-build
-		wget http://nginx.org/download/nginx-1.15.2.tar.gz
-		tar xvfz nginx-1.15.2.tar.gz
+		wget http://nginx.org/download/nginx-1.15.6.tar.gz
+		tar xvfz nginx-1.15.6.tar.gz
 		adduser --system --no-create-home --disabled-login --disabled-password --group nginx
 		
 		Put "sendfile off;" in nginx.conf on test server when using virtualbox shared folders
@@ -375,10 +375,11 @@ Install Required Software From Source
 			sudo make install
 			
 			
-		cd /root/nginx-build/nginx-1.15.2/
-		./configure --with-openssl=/root/openssltemp/openssl-1.1.1-pre8 --with-openssl-opt=enable-tls1_3 --with-http_realip_module  --with-http_v2_module --prefix=/var/jetendo-server/nginx --user=nginx --group=nginx --with-http_ssl_module --with-http_gzip_static_module  --with-http_flv_module --with-http_mp4_module --with-http_stub_status_module --add-module=/root/nginx-build/nginx-upload-module-master  --add-module=/root/nginx-build/ngx_devel_kit-master --add-module=/root/nginx-build/set-misc-nginx-module-master --add-module=/root/nginx-build/nginx-clojure-master/src/c
+		cd /root/nginx-build/nginx-1.15.6/
+		./configure --with-openssl=/root/openssltemp/openssl-1.1.1 --with-openssl-opt=enable-tls1_3 --with-http_realip_module  --with-http_v2_module --prefix=/var/jetendo-server/nginx --user=nginx --group=nginx --with-http_ssl_module --with-http_gzip_static_module  --with-http_flv_module --with-http_mp4_module --with-http_stub_status_module --add-module=/root/nginx-build/nginx-upload-module-master  --add-module=/root/nginx-build/ngx_devel_kit-master --add-module=/root/nginx-build/set-misc-nginx-module-master
+
+#disabled clojure for now		--add-module=/root/nginx-build/nginx-clojure-master/src/c
 		
-		# didn't build: 
 		make
 		make install
 		cd /var/jetendo-server/nginx
@@ -410,31 +411,122 @@ Install lucee
 		mkdir /var/jetendo-server/system/apr-build/
 		cd /var/jetendo-server/system/apr-build/
 		# get the newest apr unix gz here: http://apr.apache.org/download.cgi
-		wget http://apache.mirrors.tds.net//apr/apr-1.6.3.tar.gz
-		tar -xvf apr-1.6.3.tar.gz
-		cd apr-1.6.3
+		wget http://apache.mirrors.ionfish.org//apr/apr-1.6.5.tar.gz
+		tar -xvf apr-1.6.5.tar.gz
+		cd apr-1.6.5
 		./configure
 		make && make install
 	Compile and Install Tomcat Native Library
 		export JAVA_HOME=`type -p javac|xargs readlink -f|xargs dirname|xargs dirname`
+		or
+		export JAVA_HOME=/var/jetendo-server/lucee/jdk/jre/
 		cd /var/jetendo-server/system/apr-build/
 		# get the newest tomcat native library source here: http://tomcat.apache.org/download-native.cgi
-		wget http://mirrors.gigenet.com/apache/tomcat/tomcat-connectors/native/1.2.17/source/tomcat-native-1.2.17-src.tar.gz
-		tar -xvzf tomcat-native-1.2.17-src.tar.gz
-		cd tomcat-native-1.2.17-src/native/
-		./configure --with-apr=/usr/local/apr/bin/ --with-ssl=/root/openssltemp/openssl-1.1.1-pre8 --with-java-home=/usr/lib/jvm/java-11-openjdk-amd64
+		wget http://www.trieuvan.com/apache/tomcat/tomcat-connectors/native/1.2.18/source/tomcat-native-1.2.18-src.tar.gz
+		tar -xvzf tomcat-native-1.2.18-src.tar.gz
+		cd tomcat-native-1.2.18-src/native/
+		./configure --with-apr=/usr/local/apr/bin/ --with-ssl=/root/openssltemp/openssl-1.1.1 --with-java-home=/var/jetendo-server/lucee/jdk/jre/
 		make && make install
 		
-	Install tomcat 9.0.10 manually instead of lucee installer?
+	Install lucee from newest tomcat x64 binary release on www.lucee.org
+		mkdir /var/jetendo-server/system/lucee/
+		cd /var/jetendo-server/system/lucee/
+		download lucee linux x64 tomcat from http://lucee.org/ and upload to /var/jetendo-server/system/lucee/
+		
+		chmod 770 the installer file.
+		
+		#shutdown and disable Lucee if it is installed.
+		service lucee_ctl stop
+		echo manual | sudo tee /etc/init/lucee_ctl.override
+		
+		run the installer file
+		When it asks for the user to run lucee as, type in: www-data
+		Installation Directory /var/jetendo-server/lucee
+		Start lucee at boot time: Y
+		Don't allow installation of apache connectors: n
+		Remember to write down password for Tomcat/lucee administrator.
+		
+		Edit /etc/init.d/lucee_ctl
+			Before echo "[DONE]" in the start function add these lines where company domain is one of the main domain setup in jetendo for the server administrator.
+				
+				Test Server:
+					printf "\nLoading Jetendo Application\n"
+					/usr/bin/wget -O- 'http://dev.127.0.0.2.nip.io:8888/zcorerootmapping/index.cfm?_zsa3_path=/&zcoreRunFirstInit=1'
+					printf "\n[DONE]"
+				Production Server:
+					printf "\nLoading Jetendo Application\n"
+					/usr/bin/wget -O- 'http://dev.127.0.0.1.nip.io:8888/zcorerootmapping/index.cfm?_zsa3_path=/&zcoreRunFirstInit=1'
+					printf "\n[DONE]"
+		
+		wget latest openjdk 11 64bit linux here: https://jdk.java.net/11/
+		tar xfvz /root/openjdk-11.0.1_linux-x64_bin.tar.gz --directory /usr/lib/jvm
+		
+		you can copy the jdk to lucee/jdk/jre to make it the one lucee uses.
+		
+		however, you may need to delete all the references to  -Djava.endorsed.dirs="\"$JAVA_ENDORSED_DIRS\"" 
+		in this file: lucee/tomcat/bin/catalina.sh
+		for java 9+, because it will prevent the virtual machine from starting.
+		it may also be necessary to delete the cfclasses folder in luceevhosts to get it to recompile everything.
+
+		
+	Optional: Install wildfly servlet only distribution with lucee
+		tutorial: https://www.howtoforge.com/tutorial/ubuntu-wildfly-jboss-installation/
+		cd /var/jetendo-server/system/lucee/temp
+		wget http://download.jboss.org/wildfly/14.0.1.Final/wildfly-14.0.1.Final.tar.gz
+		tar -xvzf wildfly-14.0.1.Final.tar.gz
+		mv wildfly-14.0.1.Final /var/jetendo-server/wildfly
+		
+		/var/jetendo-server/wildfly/bin/add-user.sh
+			a / a / admin / no for the process question
+		
+		sh /var/jetendo-server/wildfly/bin/standalone.sh
+		
+		
+		login to admin:
+			http://127.0.0.2:8080/
+			
+			127.0.0.2:9990
+		You can install Lucee as a war in deployments.  A war is thin layer on top of the normal lucee.jar that puts it in META-INF and has some hello-world content in the root.
+			
+			Lucee can't recompile code without its agent:
+				/var/jetendo-server/wildfly/bin
+				# custom JVM options:
+				JAVA_OPTS="$JAVA_OPTS -javaagent:/content/lucee-5.2.9.31.war/WEB-INF/lucee-server/context/lucee-external-agent.jar"
+	
+		Wildfly doesn't have the compilation delay on Java 10
+		The ubuntu official java 11 install is still actually Java 10
+		
+		We have to give wildfly this version of java:
+			/usr/lib/jvm/jdk-11.0.1
+	
+	Optional: Install tomcat 9.0.10 manually instead of lucee installer?
+		Note java 10+ make CFML compilation take up to 5 seconds longer per file.
+		
 		https://www.digitalocean.com/community/tutorials/install-tomcat-9-ubuntu-1804
 		cd /var/jetendo-server/system/lucee/temp
-		wget http://mirror.cc.columbia.edu/pub/software/apache/tomcat/tomcat-9/v9.0.10/bin/apache-tomcat-9.0.10.tar.gz
+		wget http://mirror.cc.columbia.edu/pub/software/apache/tomcat/tomcat-9/v9.0.13/bin/apache-tomcat-9.0.13.tar.gz
 		mkdir /var/jetendo-server/tomcat
 		tar xzvf /var/jetendo-server/system/lucee/temp/apache-tomcat-9*.tar.gz -C /var/jetendo-server/tomcat --strip-components=1
 		cd /var/jetendo-server/tomcat
 		chown -R www-data:www-data /var/jetendo-server/tomcat/
 		chmod -R 770 /var/jetendo-server/tomcat/ 
 		vi /etc/systemd/system/tomcat.service
+		 
+		touch /var/jetendo-server/tomcat/bin/setenv.sh
+		add this to setenv.sh with newline set to unix:
+			# Tomcat memory settings
+			# -Xms<size> set initial Java heap size
+			# -Xmx<size> set maximum Java heap size
+			CATALINA_OPTS="-server -Dsun.io.useCanonCaches=false -Xms1024m -Xmx1524m -Djava.library.path=/usr/local/apr/lib -XX:+OptimizeStringConcat -XX:+UseTLAB -XX:+UseBiasedLocking -Xverify:none -XX:+UseThreadPriorities  -XX:-UseLargePages -XX:+UseCompressedOops";
+
+			# additional JVM arguments can be added to the above line as needed, such as
+			# custom Garbage Collection arguments.
+
+			export CATALINA_OPTS;
+			
+			
+			
+
 		 
 [Unit]
 Description=Apache Tomcat Web Application Container

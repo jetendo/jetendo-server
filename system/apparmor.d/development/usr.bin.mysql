@@ -4,7 +4,6 @@
 /usr/bin/mysql {
   #include <abstractions/base>
   #include <abstractions/nameservice>
-	#include <abstractions/lxc/container-base>
 
   capability dac_override,
 
