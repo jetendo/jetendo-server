@@ -189,6 +189,10 @@ Log out and login as root using ssh for the rest of the instructions.
 	mount -a
 	mount mysql fails until it is installed because user doesn't exist yet.
 	
+# keep journal from growing too large:
+vi /etc/systemd/journald.conf
+SystemMaxUse=100M
+	
 Add Prerequisite Repositories
 	sudo add-apt-repository ppa:linuxuprising/java
 	NOT NEEDED add-apt-repository ppa:kirillshkrogalev/ffmpeg-next

@@ -463,10 +463,14 @@
         <url-pattern>*.cfm</url-pattern>
         <url-pattern>*.cfml</url-pattern>
         <url-pattern>*.cfc</url-pattern>
+        <url-pattern>*.lucee</url-pattern>
+        <url-pattern>*.lc</url-pattern>
 	<!-- Basic SES Mappings -->
 	<url-pattern>/index.cfc/*</url-pattern>
 	<url-pattern>/index.cfm/*</url-pattern>
 	<url-pattern>/index.cfml/*</url-pattern>
+	<url-pattern>/index.lc/*</url-pattern>
+	<url-pattern>/index.lucee/*</url-pattern>
     </servlet-mapping>
 
     <!-- mapping for Lucee's REST servlet -->
