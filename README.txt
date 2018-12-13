@@ -852,6 +852,7 @@ Configure Jetendo CMS
 			/var/jetendo-server/lucee/tomcat/lucee-server/context/userdata
 			/zbackup/backup
 			/zbackup/jetendo
+			/var/jetendo-server/luceevhosts/server/lucee-server
 			
 			# if you have other drives, you can do something like this too:
 			/zbackup2/backup
