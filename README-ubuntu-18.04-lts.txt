@@ -2,7 +2,7 @@ TODO:
 	important, i left monit disabled
 	i didn't finish apparmor for new tomcat
 	I could use ZFS still in a new version for better disk usage and backup.
-	php7.2-fpm is not able to start
+	php7.3-fpm is not able to start
 
 Jetendo Server Installation Documentation
 OS: Ubuntu Server 18.04 LTS
@@ -89,9 +89,6 @@ sudo -i
 			
 	update-grub
 	
-TODOMISSING: # vi /etc/init/cron.conf
-	change "exec cron" to "exec cron -L 0"  to stop it from filling syslog with non-error messages.
-	and
 #vi /etc/rsyslog.d/50-default.conf
 	change 
 		*.*;auth,authpriv.none		-/var/log/syslog
@@ -99,9 +96,11 @@ TODOMISSING: # vi /etc/init/cron.conf
 		*.*;auth,authpriv.none,cron.none		-/var/log/syslog
 
 # Initial kernel & OS update
-	sudo apt-get update
-	sudo apt-get upgrade
-	sudo apt-get dist-upgrade
+	apt-get update
+	apt-get upgrade
+	apt-get dist-upgrade
+	
+	# ast firmware warning can be safely ignored - its for windows ipmi stuff
 	
 # Enable empty password autologin for root on development server
 	sudo passwd root
@@ -194,37 +193,46 @@ vi /etc/systemd/journald.conf
 SystemMaxUse=100M
 	
 Add Prerequisite Repositories
-	sudo add-apt-repository ppa:linuxuprising/java
-	NOT NEEDED add-apt-repository ppa:kirillshkrogalev/ffmpeg-next
+	# because 18.04 doesn't have java 11, we need another PPA
+	sudo add-apt-repository ppa:openjdk-r/ppa
+	sudo apt update
+	sudo apt install openjdk-11-jdk
+	# for handbrake video encoding
 	add-apt-repository ppa:stebbins/handbrake-releases
+	# not sure what it was for
 	add-apt-repository "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) universe"
 	
-	sudo apt-get install software-properties-common
+	# php 7.3
+	add-apt-repository ppa:ondrej/php
+		
+	# mariadb 10.3
 	sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
-	sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.3/ubuntu bionic main' 
+	sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://ftp.utexas.edu/mariadb/repo/10.3/ubuntu bionic main'
  
 Install Required Packages
 	apt-get update
 	apt-get install mariadb-server
 	
 CONTINUE HERE
-
-	apt-get install apache2  cifs-utils samba libsasl2-modules postfix openjdk-11-jdk imagemagick git libssl-dev build-essential libpcre3-dev unzip apparmor-utils php-pear make dnsutils
+	# skipped:  php-pear
+	apt-get install apache2  cifs-utils samba libsasl2-modules postfix openjdk-11-jdk imagemagick git libssl-dev build-essential libpcre3-dev unzip apparmor-utils make dnsutils
 	timedatectl set-ntp on
 	timedatectl set-timezone America/New_York
 	  
-	apt-get install php7.2
-	apt-get install php7.2-mysql php7.2-cli php7.2-gd php7.2-curl php7.2-dev php7.2-sqlite3 curl
+	apt-get install php7.3
+	apt-get install php7.3-mysql php7.3-cli php7.3-gd php7.3-curl php7.3-dev php7.3-sqlite3 curl
 	
-	apt-get install php7.2-common php7.2-mbstring php7.2-imap php-imagick php7.2-fpm handbrake-gtk handbrake-cli rng-tools p7zip-full mailutils fail2ban opendkim opendkim-tools dnsmasq ffmpeg monit sshpass handbrake-cli
+	apt-get install php7.3-common php7.3-mbstring php7.3-imap php-imagick php7.3-fpm handbrake-gtk handbrake-cli rng-tools p7zip-full mailutils fail2ban opendkim opendkim-tools dnsmasq ffmpeg monit sshpass handbrake-cli
 	
 	# if you want to use php with apache2, also run this:
-	apt-get install libapache2-mod-php7.2
+	apt-get install libapache2-mod-php7.3
 	
 	# accept defaults for all installers - when postfix installer prompts you, i.e. OK, Internet Site
 	
 Configure MariaDB
 	Important Note: Mariadb doesn't appear to work when the datadir is in a Virtualbox Shared Folder anymore.  For virtual machines where you want to separate the datadir, you must use a vdi file instead.
+	
+	Verify it is 10.3 with mysql -V
 
 	service mysql stop
 	#make sure mysql shared folder is mounted if using virtualbox
@@ -234,6 +242,7 @@ Configure MariaDB
 	mkdir /var/jetendo-server/mysql/data/
 	cp -rf /var/lib/mysql/* /var/jetendo-server/mysql/data/
 	chown -R mysql:mysql /var/jetendo-server/mysql/data/
+	# only on test server, otherwise, use symlink further down in this readme
 	cp /var/jetendo-server/system/jetendo-mysql-development.cnf /etc/mysql/my.cnf
 	
 	# disable the /root/.mysql_history file
@@ -253,9 +262,9 @@ Configure Apache2 (Note: Jetendo CMS uses Nginx exclusive, Apache configuration 
 	service apache2 restart
 	
 	If you don't need Apache, it is recommended to disable it from starting with the following command:
-		update-rc.d apache2 disable
+		systemctl disable apache2
 	To re-enable:
-		update-rc.d apache2 enable
+		systemctl enable apache2
 		service apache2 start
 		
 Imagemagick 6.9 is the default, but we might need Imagemagick 7, which requires compilation.  You don't have to uninstall the other imagemagick.  These are the steps to do it:
@@ -268,6 +277,9 @@ Imagemagick 6.9 is the default, but we might need Imagemagick 7, which requires 
 	cd ImageMagick-7*
 
 	./configure
+	
+	# if you want to improve performance, disable 16bit and HDRI support and install inkscape
+	./configure --with-quantum-depth=8 --enable-hdri=no
 	make
 	make install
 	ldconfig /usr/local/lib
@@ -277,9 +289,9 @@ Imagemagick 6.9 is the default, but we might need Imagemagick 7, which requires 
 Install OpenSSL 1.1.1+ for TLS 1.3 and more
 	mkdir /root/openssltemp
 	cd /root/openssltemp
-	wget https://www.openssl.org/source/openssl-1.1.1.tar.gz
-	tar xvf openssl-1.1.1.tar.gz
-	cd openssl-1.1.1
+	wget https://www.openssl.org/source/openssl-1.1.1b.tar.gz
+	tar xvf openssl-1.1.1b.tar.gz
+	cd openssl-1.1.1b
 	./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl -Wl,-rpath,/usr/local/ssl/lib
 	make
 	make install
@@ -292,8 +304,8 @@ Install Required Software From Source
 	Nginx
 		mkdir /root/nginx-build
 		cd /root/nginx-build
-		wget http://nginx.org/download/nginx-1.15.6.tar.gz
-		tar xvfz nginx-1.15.6.tar.gz
+		wget http://nginx.org/download/nginx-1.15.9.tar.gz
+		tar xvfz nginx-1.15.9.tar.gz
 		adduser --system --no-create-home --disabled-login --disabled-password --group nginx
 		
 		Put "sendfile off;" in nginx.conf on test server when using virtualbox shared folders
@@ -301,22 +313,19 @@ Install Required Software From Source
 		#download and unzip nginx modules
 			cd /root/nginx-build/
 			wget https://github.com/simpl/ngx_devel_kit/archive/master.zip
-			unzip master.zip -d /root/nginx-build/
-			rm master.zip
+			unzip master.zip -d /root/nginx-build/ && rm master.zip
 			wget https://github.com/agentzh/set-misc-nginx-module/archive/master.zip
-			unzip master.zip -d /root/nginx-build/
-			rm master.zip
+			unzip master.zip -d /root/nginx-build/ && rm master.zip
 			
 			wget https://github.com/fdintino/nginx-upload-module/archive/master.zip
-			unzip master.zip -d /root/nginx-build/
-			rm master.zip
+			unzip master.zip -d /root/nginx-build/ && rm master.zip
 			
-			#embed java into nginx
+			#SKIP FOR NOW: embed java into nginx
 			wget https://github.com/nginx-clojure/nginx-clojure/archive/master.zip
 			unzip master.zip -d /root/nginx-build/
 			rm master.zip
 			
-			#need java 8 due to use of UNSAFE
+			#SKIP FOR NOW: need java 8 due to use of UNSAFE
 			apt install openjdk-8-jre-headless
 			
 				# because of new version of gcc, I had to change comments that we /*no break*/ to /*fallthrough*/ in these 2 files to get the warnings to go away for make:
@@ -330,7 +339,7 @@ Install Required Software From Source
 					lein jar
 		
 		
-			to get java started on nginx start :
+			SKIP FOR NOW: to get java started on nginx start :
 				nginx config
 				http {
 				......
@@ -379,12 +388,12 @@ Install Required Software From Source
 			sudo make install
 			
 			
-		cd /root/nginx-build/nginx-1.15.6/
-		./configure --with-openssl=/root/openssltemp/openssl-1.1.1 --with-openssl-opt=enable-tls1_3 --with-http_realip_module  --with-http_v2_module --prefix=/var/jetendo-server/nginx --user=nginx --group=nginx --with-http_ssl_module --with-http_gzip_static_module  --with-http_flv_module --with-http_mp4_module --with-http_stub_status_module --add-module=/root/nginx-build/nginx-upload-module-master  --add-module=/root/nginx-build/ngx_devel_kit-master --add-module=/root/nginx-build/set-misc-nginx-module-master
+		cd /root/nginx-build/nginx-1.15.9/
+		./configure --with-openssl=/root/openssltemp/openssl-1.1.1b --with-openssl-opt=enable-tls1_3 --with-http_realip_module  --with-http_v2_module --prefix=/var/jetendo-server/nginx --user=nginx --group=nginx --with-http_ssl_module --with-http_gzip_static_module  --with-http_flv_module --with-http_mp4_module --with-http_stub_status_module --add-module=/root/nginx-build/nginx-upload-module-master  --add-module=/root/nginx-build/ngx_devel_kit-master --add-module=/root/nginx-build/set-misc-nginx-module-master
 
 #disabled clojure for now		--add-module=/root/nginx-build/nginx-clojure-master/src/c
 		
-		make
+		make  - stopped here
 		make install
 		cd /var/jetendo-server/nginx
 		mkdir cache client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp ssl upload_temp
@@ -426,10 +435,10 @@ Install lucee
 		export JAVA_HOME=/var/jetendo-server/lucee/jdk/jre/
 		cd /var/jetendo-server/system/apr-build/
 		# get the newest tomcat native library source here: http://tomcat.apache.org/download-native.cgi
-		wget http://www.trieuvan.com/apache/tomcat/tomcat-connectors/native/1.2.18/source/tomcat-native-1.2.18-src.tar.gz
-		tar -xvzf tomcat-native-1.2.18-src.tar.gz
-		cd tomcat-native-1.2.18-src/native/
-		./configure --with-apr=/usr/local/apr/bin/ --with-ssl=/root/openssltemp/openssl-1.1.1 --with-java-home=/var/jetendo-server/lucee/jdk/jre/
+		wget http://www.trieuvan.com/apache/tomcat/tomcat-connectors/native/1.2.21/source/tomcat-native-1.2.21-src.tar.gz
+		tar -xvzf tomcat-native-1.2.21-src.tar.gz
+		cd tomcat-native-1.2.21-src/native/
+		./configure --with-apr=/usr/local/apr/bin/ --with-ssl=/root/openssltemp/openssl-1.1.1b
 		make && make install
 		
 	Install lucee from newest tomcat x64 binary release on www.lucee.org
@@ -439,10 +448,6 @@ Install lucee
 		
 		chmod 770 the installer file.
 		
-		#shutdown and disable Lucee if it is installed.
-		service lucee_ctl stop
-		echo manual | sudo tee /etc/init/lucee_ctl.override
-		
 		run the installer file
 		When it asks for the user to run lucee as, type in: www-data
 		Installation Directory /var/jetendo-server/lucee
@@ -450,7 +455,11 @@ Install lucee
 		Don't allow installation of apache connectors: n
 		Remember to write down password for Tomcat/lucee administrator.
 		
-		Edit /etc/init.d/lucee_ctl
+		SKIPPED THIS: #shutdown and disable Lucee if it is installed.
+			service lucee_ctl stop
+			echo manual | sudo tee /etc/init/lucee_ctl.override
+		
+		SKIPPED THIS: Edit /etc/init.d/lucee_ctl
 			Before echo "[DONE]" in the start function add these lines where company domain is one of the main domain setup in jetendo for the server administrator.
 				
 				Test Server:
@@ -462,18 +471,20 @@ Install lucee
 					/usr/bin/wget -O- 'http://dev.127.0.0.1.nip.io:8888/zcorerootmapping/index.cfm?_zsa3_path=/&zcoreRunFirstInit=1'
 					printf "\n[DONE]"
 		
-		wget latest openjdk 11 64bit linux here: https://jdk.java.net/11/
-		tar xfvz /root/openjdk-11.0.1_linux-x64_bin.tar.gz --directory /usr/lib/jvm
-		
 		you can copy the jdk to lucee/jdk/jre to make it the one lucee uses.
+		mv /var/jetendo-server/lucee/jdk /var/jetendo-server/lucee/jdk8
+		mkdir /var/jetendo-server/lucee/jdk
+		cp -r /usr/lib/jvm/java-11-openjdk-amd64/* /var/jetendo-server/lucee/jdk
+		chown www-data:www-data -R /var/jetendo-server/lucee/
+		chmod 770 -R /var/jetendo-server/lucee/
 		
-		however, you may need to delete all the references to  -Djava.endorsed.dirs="\"$JAVA_ENDORSED_DIRS\"" 
-		in this file: lucee/tomcat/bin/catalina.sh
+		after installing java 11 jdk for lucee, you will need to delete all the references to  -Djava.endorsed.dirs="\"$JAVA_ENDORSED_DIRS\"" 
+		in this file: /var/jetendo-server/lucee/tomcat/bin/catalina.sh
 		for java 9+, because it will prevent the virtual machine from starting.
 		it may also be necessary to delete the cfclasses folder in luceevhosts to get it to recompile everything.
 
 		
-	Optional: Install wildfly servlet only distribution with lucee
+	SKIPPED: Optional: Install wildfly servlet only distribution with lucee
 		tutorial: https://www.howtoforge.com/tutorial/ubuntu-wildfly-jboss-installation/
 		cd /var/jetendo-server/system/lucee/temp
 		wget http://download.jboss.org/wildfly/14.0.1.Final/wildfly-14.0.1.Final.tar.gz
@@ -503,7 +514,7 @@ Install lucee
 		We have to give wildfly this version of java:
 			/usr/lib/jvm/jdk-11.0.1
 	
-	Optional: Install tomcat 9.0.10 manually instead of lucee installer?
+	SKIPPED: Optional: Install tomcat 9.0.10 manually instead of lucee installer?
 		Note java 10+ make CFML compilation take up to 5 seconds longer per file.
 		
 		https://www.digitalocean.com/community/tutorials/install-tomcat-9-ubuntu-1804
@@ -530,7 +541,7 @@ Install lucee
 			
 			
 			
-
+SKIPPED BELOW
 		 
 [Unit]
 Description=Apache Tomcat Web Application Container
@@ -573,18 +584,20 @@ WantedBy=multi-user.target
 			; A default value for the CURLOPT_CAINFO option. This is required to be an
 			; absolute path.
 			curl.cainfo ="/usr/local/share/ca-certificates/cacert.pem"
-		service php7.2-fpm restart
+		service php7.3-fpm restart
 		 
 		for tomcat 9 and java 10, use this command instead and say yes:
 			/usr/bin/keytool -import -keystore /usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts -trustcacerts -file /usr/local/share/ca-certificates/cacert.pem -storepass changeit
+			#below is probably not needed due to symlink, but its here just in case:
+			/usr/bin/keytool -import -keystore /var/jetendo-server/lucee/jdk/lib/security/cacerts -trustcacerts -file /usr/local/share/ca-certificates/cacert.pem -storepass changeit
 		
 		 
 		
 		// replace server.xml and web.xml with the lucee ones which use the luceevhosts directory instead of lucee 
 		// upload latest lucee.org snapshot jar to /var/jetendo-server/tomcat/lib/
 		systemctl daemon-reload
-		systemctl restart tomcat
-		systemctl enable tomcat
+		systemctl restart lucee_ctl
+		systemctl enable lucee_ctl
 		visit server and web admin to setup the rest including the first time password
 		http://dev.127.0.0.2.nip.io:8888/lucee/admin/server.cfm
 		 
@@ -612,14 +625,6 @@ WantedBy=multi-user.target
 	# adjust Xmx high as you can afford, but at least 512m is necessary
 		CATALINA_OPTS="-server -Dsun.io.useCanonCaches=false -Xms512m -Xmx1024m -javaagent:lib/lucee-inst.jar  -Djava.library.path=/usr/local/apr/lib -XX:+OptimizeStringConcat -XX:+UseTLAB -XX:+UseBiasedLocking -Xverify:none -XX:+UseThreadPriorities  -XX:+UseFastAccessorMethods -XX:-UseLargePages -XX:+UseCompressedOops";
 		
-	Put newest JRE In lucee:
-		service lucee_ctl stop
-		mv /var/jetendo-server/lucee/jdk/jre /var/jetendo-server/lucee/jdk/jre-original
-		mkdir /var/jetendo-server/lucee/jdk/jre
-		/bin/cp -rf /usr/lib/jvm/java-10-oracle/jre/* /var/jetendo-server/lucee/jdk/jre
-		chown -R www-data:www-data /var/jetendo-server/lucee/
-		chmod -R 770 /var/jetendo-server/lucee/
-
 	mkdir /var/jetendo-server/jetendo/
 	mkdir /var/jetendo-server/jetendo/sites
 	mkdir /var/jetendo-server/jetendo/share
@@ -634,19 +639,19 @@ WantedBy=multi-user.target
  
 	# install the server.xml for production or development
 		# development
-		cp /var/jetendo-server/system/lucee/server-development.xml /var/jetendo-server/tomcat/conf/server.xml
-		cp /var/jetendo-server/system/lucee/web-development.xml /var/jetendo-server/tomcat/conf/web.xml
-		cp /var/jetendo-server/system/lucee/logging-development.properties /var/jetendo-server/tomcat/conf/logging.properties
-		cp /var/jetendo-server/system/lucee/setenv-development.sh /var/jetendo-server/tomcat/bin/setenv.sh
+		cp /var/jetendo-server/system/lucee/server-development.xml /var/jetendo-server/lucee/tomcat/conf/server.xml
+		cp /var/jetendo-server/system/lucee/web-development.xml /var/jetendo-server/lucee/tomcat/conf/web.xml
+		cp /var/jetendo-server/system/lucee/logging-development.properties /var/jetendo-server/lucee/tomcat/conf/logging.properties
+		cp /var/jetendo-server/system/lucee/setenv-development.sh /var/jetendo-server/lucee/tomcat/bin/setenv.sh
 		# production
-		cp /var/jetendo-server/system/lucee/server-production.xml /var/jetendo-server/tomcat/conf/server.xml
-		cp /var/jetendo-server/system/lucee/web-production.xml /var/jetendo-server/tomcat/conf/web.xml
-		cp /var/jetendo-server/system/lucee/logging-production.properties /var/jetendo-server/tomcat/conf/logging.properties
-		cp /var/jetendo-server/system/lucee/setenv-production.sh /var/jetendo-server/tomcat/bin/setenv.sh
+		cp /var/jetendo-server/system/lucee/server-production.xml /var/jetendo-server/lucee/tomcat/conf/server.xml
+		cp /var/jetendo-server/system/lucee/web-production.xml /var/jetendo-server/lucee/tomcat/conf/web.xml
+		cp /var/jetendo-server/system/lucee/logging-production.properties /var/jetendo-server/lucee/tomcat/conf/logging.properties
+		cp /var/jetendo-server/system/lucee/setenv-production.sh /var/jetendo-server/lucee/tomcat/bin/setenv.sh
 		
 	
-	vi /etc/logrotate.d/tomcat
-	/var/jetendo-server/tomcat/logs/catalina.out {
+	vi /etc/logrotate.d/lucee_ctl
+	/var/jetendo-server/lucee/tomcat/logs/catalina.out {
 		copytruncate
 		daily
 		rotate 7
@@ -672,7 +677,7 @@ WantedBy=multi-user.target
 	http://dev.com.127.0.0.2.nip.io:8888/lucee/admin/web.cfm?action=resources.mappings
 	 
 	 
-Install node.js 0.12.x using nodesource PPA
+SKIPPED: Install node.js 0.12.x using nodesource PPA
 	apt-get install apt-transport-https
 	wget -qO- https://deb.nodesource.com/setup_0.12 | bash -
 	apt-get install nodejs
@@ -684,12 +689,13 @@ Install node.js 0.12.x using nodesource PPA
 	node -v
 	handlebars -v
 	 
-Download Install Newest Intel Ethernet Adapter Driver If Production Server Use Intel Device
+SKIPPED: Download Install Newest Intel Ethernet Adapter Driver If Production Server Use Intel Device
 	lspci | grep -i eth
 	
 Install Optional Packages If You Want Them:
 	# provide KVM virtual machines on production server
-		apt-get install cpu-checker qemu-kvm libvirt-bin virtinst bridge-utils ubuntu-virt-server python-vm-builder
+		apt-get install cpu-checker qemu-kvm libvirt-bin virtinst bridge-utils python-vm-builder
+		# doesn't exist on 18.04:  ubuntu-virt-server
 	# provide regular ftp
 		apt-get install vsftpd
 	# provides ab (apachebench) benchmarking utility
@@ -707,17 +713,17 @@ Configure the variables in jetendo.ini manually
 	/var/jetendo-server/system/php/jetendo.ini
 	
 Make sure the jetendo.ini symbolic link is created:
-	ln -sfn /var/jetendo-server/system/php/jetendo.ini /etc/php/7.2/mods-available/jetendo.ini
+	ln -sfn /var/jetendo-server/system/php/jetendo.ini /etc/php/7.3/mods-available/jetendo.ini
 Enable the php configuration module:	
 	phpenmod jetendo
-	service php7.2-fpm restart
+	service php7.3-fpm restart
 	
 # development server symbolic link configuration
 	ln -sfn /var/jetendo-server/system/nginx-conf/nginx-development.conf /var/jetendo-server/nginx/conf/nginx.conf
 	ln -sfn /var/jetendo-server/system/jetendo-sysctl-development.conf /etc/sysctl.d/jetendo-sysctl-development.conf
 	ln -sfn /var/jetendo-server/system/monit/jetendo-development.conf /etc/monit/conf.d/jetendo.conf
 	ln -sfn /var/jetendo-server/system/apache-conf/development-sites-enabled /etc/apache2/sites-enabled
-	ln -sfn /var/jetendo-server/system/php/development-pool /etc/php/7.2/fpm/pool.d
+	ln -sfn /var/jetendo-server/system/php/development-pool /etc/php/7.3/fpm/pool.d
 		
 	replace sa.your-company.com 3 times in /var/jetendo-server/system/monit/jetendo-development.conf with the jetendo server manager domain and change to https if you are using https 
 	
@@ -727,7 +733,7 @@ Enable the php configuration module:
 	ln -sfn /var/jetendo-server/system/jetendo-sysctl-production.conf /etc/sysctl.d/jetendo-sysctl-production.conf
 	ln -sfn /var/jetendo-server/system/monit/jetendo-production.conf /etc/monit/conf.d/jetendo.conf
 	ln -sfn /var/jetendo-server/system/apache-conf/production-sites-enabled /etc/apache2/sites-enabled
-	ln -sfn /var/jetendo-server/system/php/production-pool /etc/php/7.2/fpm/pool.d
+	ln -sfn /var/jetendo-server/system/php/production-pool /etc/php/7.3/fpm/pool.d
 	
 	replace sa.your-company.com 3 times in /var/jetendo-server/system/monit/jetendo-production.conf with the jetendo server manager domain and change to https if you are using https 
 	
@@ -827,16 +833,20 @@ Configure Postfix to use Sendgrid.net for relying mail.
 	If the problem persists, check the logs at /var/log/mail.log or /var/log/syslog for error messages.
 	
 Enable hardware random number generator on non-virtual machine.  This is not safe on a virtual machine.
-	rngd -r /dev/urandom
+	vi /etc/default/rng-tools
+	HRNGDEVICE=/dev/urandom
+	service rng-tools restart
 	
 	on virtual machine use this instead:
 		apt-get install haveged
 	
 manually download the latest 64-bit stable linux version of wkhtmltopdf on the website: http://wkhtmltopdf.org/downloads.html
-	wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox_0.12.5-1.bionic_amd64.deb
+	SKIPPED: wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox_0.12.5-1.bionic_amd64.deb
 	apt-get install xfonts-base xfonts-75dpi
 	dpkg -i /root/wkhtmltox_0.12.5-1.bionic_amd64.deb
 	
+	USE THIS INSTEAD: (12.4-1 gets installed in ubuntu 18.04.2 with a LOT of dependencies)
+	apt-get install wkhtmltopdf
 	
 Configure Jungledisk (Optional)
 	This is a recommend solution for remote backup of production servers.
@@ -844,10 +854,10 @@ Configure Jungledisk (Optional)
 	Install Jungledisk
 		Download 64-bit Server Edition Software from your jungledisk.com account:
 		cd /root/
-		wget https://downloads.jungledisk.com/jungledisk/junglediskserver_316-0_amd64.deb
+		wget https://downloads.jungledisk.com/jungledisk/junglediskserver_330-7_amd64.deb
 		
 		# Run this command to install it.  Make sure the file name matches the file you downloaded.
-		dpkg -i /root/junglediskserver_316-0_amd64.deb
+		dpkg -i /root/junglediskserver_330-7_amd64.deb
 		
 		Reset the license key on your jungledisk.com account page and replace LICENSE_KEY below with the key they generated for you.
 		vi /etc/jungledisk/junglediskserver-license.xml
@@ -886,41 +896,41 @@ Configuring Static IPs
 					dhcp4: true
 			version: 2
 
+	# Live server syntax for kvm bridge
+		network:
+			version: 2
+			ethernets:
+				eno1:
+					dhcp4: false
+					addresses:
+					- 104.156.56.35/24
+					gateway4: 104.156.56.1
+					nameservers:
+						addresses:
+						- 66.96.80.43
+						- 66.96.80.194
+				eno2:
+					dhcp4: false
+					optional: true
+			bridges:
+				virbr0:
+				  dhcp4: false
+				  interfaces: [eno1]
+				  
+		vi /tmp/virbr0.xml
+		<network>
+		  <name>virbr0</name>
+		  <forward mode='bridge'/>
+		  <bridge name='virbr0'/>
+		</network>
+		
+		Didn't do this yet: 
+		virsh net-define /tmp/virbr0.xml
+		virsh net-start virbr0
+		virsh net-autostart virbr0
+		
+		ls /etc/libvirt/qemu/networks
 	
-	TODO: NEED NEW netplan SYNTAX FOR LIVE SERVER: # To replace NAT with a static IP for same interface, delete "auto eth0" and "iface eth0 inet dhcp" and use the settings below.  Make sure the IPs match what is provided by your ISP.  The DNS Nameservers should ideally be your ISP's nameservers for best performance or google public dns which is: 8.8.8.8 8.8.4.4
-		auto eth0
-		iface eth0 inet static
-		address 192.168.0.2
-		netmask 255.255.255.0
-		network 192.168.0.0
-		broadcast 192.168.0.255
-		gateway 192.168.0.1
-		dns-nameservers 192.168.0.1 192.168.0.1
-	
-	This is the static ip configuration for development server:
-		auto eth0
-		iface eth0 inet static
-			address 10.0.2.15
-			netmask 255.255.255.0
-			network 10.0.2.0
-			broadcast 10.0.2.255
-			gateway 10.0.2.2
-			dns-nameservers 10.0.2.2
-			
-		auto eth0:1
-		iface eth0:1 inet static
-			address 10.0.2.16
-			netmask 255.255.255.0
-			network 10.0.2.0
-			broadcast 10.0.2.255
-
-	# each additional ip appends to the interface name, a colon and a sequential number.  Such as p4p1:1 below.  You can add as many of these as you wish to a single interface.  It is not necessary to specify the dns-nameservers again.
-	auto p4p1:1
-	iface p4p1:1 inet static
-		address 192.168.0.3
-		netmask 255.255.255.0
-		network 192.168.0.0
-		broadcast 192.168.0.255
 
 Visit http://nip.io/ to understand how this free service helps you create development environments with minimal re-configuration.
 	Essentially it automates dns configuration, to let you create new domains instantly that point to any ip address you desire.
@@ -929,7 +939,7 @@ Visit http://nip.io/ to understand how this free service helps you create develo
 	
 	You can also use nip.io the same way.
 	
-By default, this is not needed.  If you want additional pools, add them like this.  one listen path for each fastcgi pool.   /etc/php/7.2/fpm/pool.d/dev.com.conf  - but lets symbolic link it to /var/jetendo-server/system/php/fpm-pool-conf/
+By default, this is not needed.  If you want additional pools, add them like this.  one listen path for each fastcgi pool.   /etc/php/7.3/fpm/pool.d/dev.com.conf  - but lets symbolic link it to /var/jetendo-server/system/php/fpm-pool-conf/
 			[dev.com]
 			listen = /var/jetendo-server/php/run/fpm.dev.com.sock
 			listen.owner = www-user

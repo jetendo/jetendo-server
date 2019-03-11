@@ -1,8 +1,7 @@
-# Last Modified: Sun Jan 26 01:30:15 2014
+# Last Modified: Sat Mar  9 21:06:16 2019
 #include <tunables/global>
 
-/usr/sbin/php-fpm7.2 {
-
+/usr/sbin/php-fpm7.3 flags=(complain) {
   #include <abstractions/base>
   #include <abstractions/fonts>
   #include <abstractions/nameservice>
@@ -15,43 +14,31 @@
   capability setgid,
   capability setuid,
 
-  signal receive set=kill peer=/usr/sbin/php-fpm7.2,
-  signal receive set=term peer=/usr/sbin/php-fpm7.2,
-  signal send set=kill peer=/usr/sbin/php-fpm7.2,
-  signal send set=term peer=/usr/sbin/php-fpm7.2,
-
-  deny owner /var/jetendo-server/jetendo/public/test1.php r,
-  deny owner /var/jetendo-server/jetendo/sites/sq/customizer/system/customizer-library2.php r,
-
   /bin/dash rix,
   /bin/hostname rix,
-  /etc/ImageMagick-6/coder.xml r,
-  /etc/ImageMagick-6/colors.xml r,
-  /etc/ImageMagick-6/magic.xml r,
-  /etc/ImageMagick-6/type.xml r,
   /etc/ImageMagick/*.xml r,
   /etc/mailname r,
-  /etc/php/7.2/fpm/conf.d/ r,
-  /etc/php/7.2/fpm/php-fpm.conf r,
-  /etc/php/7.2/fpm/php.ini r,
-  /etc/php/7.2/fpm/pool.d/ r,
-  /etc/php/7.2/fpm/pool.d/www.conf r,
-  /etc/php/7.2/mods-available/* r,
+  /etc/php/7.3/fpm/conf.d/ r,
+  /etc/php/7.3/fpm/php-fpm.conf r,
+  /etc/php/7.3/fpm/php.ini r,
+  /etc/php/7.3/fpm/pool.d/ r,
+  /etc/php/7.3/fpm/pool.d/www.conf r,
+  /etc/php/7.3/mods-available/* r,
   /etc/postfix/dynamicmaps.cf r,
   /etc/postfix/main.cf r,
   /etc/ssl/openssl.cnf r,
+  /opt/jetendo/sites/studentremedy_com/livezilla/** r,
   /proc/*/auxv r,
   /proc/*/loginuid r,
-  /run/php/php7.2-fpm-*.pid w,
-  /run/php/php7.2-fpm-*.sock w,
-  /run/php/php7.2-fpm.pid w,
-  /run/php/php7.2-fpm.sock w,
+  /run/php/php7.3-fpm-*.pid w,
+  /run/php/php7.3-fpm-*.sock w,
+  /run/php/php7.3-fpm.pid w,
+  /run/php/php7.3-fpm.sock w,
   /sys/devices/system/cpu/ r,
   /tmp/* rwk,
   /usr/bin/gs rix,
   /usr/lib{,32,64}/** mr,
-  /usr/local/lib/libz.so.* mr,
-  /usr/sbin/php-fpm7.2 mrw,
+  /usr/sbin/php-fpm7.3 mrw,
   /usr/sbin/postdrop rix,
   /usr/sbin/sendmail rix,
   /usr/share/ImageMagick-*/*.xml r,
@@ -106,14 +93,17 @@
   /var/jetendo-server/system/php/jetendo.ini r,
   /var/jetendo-server/system/php/pool.d/ r,
   /var/jetendo-server/system/php/pool.d/* r,
-  /var/log/php7.2-fpm.log w,
+  /var/jetendo-server/tmp/ rwk,
+  /var/jetendo-server/tmp/** rwk,
+  /var/log/php7.3-fpm.log w,
   /var/spool/postfix/maildrop/* rw,
   /zbackup/jetendo/share/mls-images/ rw,
   /zbackup/jetendo/share/mls-images/** rw,
-  /zbackup2/jetendo/sites-writable/sq_zsite_info/** r,
-  /zbackup2/jetendo/sites-writable/sq_zsite_info/zupload/** rw,
+  /zbackup/jetendo/sites-writable/sq_zsite_info/** r,
+  /zbackup/jetendo/sites-writable/sq_zsite_info/zupload/** rw,
   owner /etc/ImageMagick-6/log.xml r,
   owner /etc/ImageMagick-6/policy.xml r,
-  owner /run/php/php7.2-fpm.sock rw,
   owner /run/systemd/notify w,
+  owner /usr/local/lib/libz.so.* r,
+
 }

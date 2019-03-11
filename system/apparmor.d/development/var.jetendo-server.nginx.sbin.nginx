@@ -44,10 +44,8 @@
   /var/jetendo-server/nginx/html/** r,
     /run/nginx.pid rw,
     /run/nginx.pid.oldbin w,
-    /run/php/php7.2-fpm.sock rw,
-    /var/run/php/php7.2-fpm.sock rw,
-    /run/php/php7.0-fpm.sock rw,
-    /var/run/php/php7.0-fpm.sock rw,
+    /run/php/php7.3-fpm.sock rw,
+    /var/run/php/php7.3-fpm.sock rw, 
 	/usr/local/lib/libz.so.* mr,
   
 }
