@@ -472,9 +472,9 @@ Install lucee
 					printf "\n[DONE]"
 		
 		you can copy the jdk to lucee/jdk/jre to make it the one lucee uses.
-		mv /var/jetendo-server/lucee/jdk /var/jetendo-server/lucee/jdk8
-		mkdir /var/jetendo-server/lucee/jdk
-		cp -r /usr/lib/jvm/java-11-openjdk-amd64/* /var/jetendo-server/lucee/jdk
+		mv /var/jetendo-server/lucee/jdk/jre /var/jetendo-server/lucee/jdk/jre8
+		mkdir /var/jetendo-server/lucee/jdk/jre
+		cp -r /usr/lib/jvm/java-11-openjdk-amd64/* /var/jetendo-server/lucee/jdk/jre
 		chown www-data:www-data -R /var/jetendo-server/lucee/
 		chmod 770 -R /var/jetendo-server/lucee/
 		
@@ -483,6 +483,9 @@ Install lucee
 		for java 9+, because it will prevent the virtual machine from starting.
 		it may also be necessary to delete the cfclasses folder in luceevhosts to get it to recompile everything.
 
+		
+		note that we had sites that need [] in url, and the tomcat server.xml connectors had to have this attribute added to support that now:
+			relaxedQueryChars="[]"
 		
 	SKIPPED: Optional: Install wildfly servlet only distribution with lucee
 		tutorial: https://www.howtoforge.com/tutorial/ubuntu-wildfly-jboss-installation/
@@ -841,12 +844,19 @@ Enable hardware random number generator on non-virtual machine.  This is not saf
 		apt-get install haveged
 	
 manually download the latest 64-bit stable linux version of wkhtmltopdf on the website: http://wkhtmltopdf.org/downloads.html
-	SKIPPED: wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox_0.12.5-1.bionic_amd64.deb
+	wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox_0.12.5-1.bionic_amd64.deb
 	apt-get install xfonts-base xfonts-75dpi
 	dpkg -i /root/wkhtmltox_0.12.5-1.bionic_amd64.deb
 	
-	USE THIS INSTEAD: (12.4-1 gets installed in ubuntu 18.04.2 with a LOT of dependencies)
-	apt-get install wkhtmltopdf
+	SKIPPED You can't use this because it depends on X server, and would run slower if we ran the virtual X server.
+		apt-get install wkhtmltopdf
+	
+	
+	
+certbot / letsencrypt
+	add-apt-repository ppa:certbot/certbot
+	apt-get update
+	apt-get install certbot
 	
 Configure Jungledisk (Optional)
 	This is a recommend solution for remote backup of production servers.
