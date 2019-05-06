@@ -209,13 +209,14 @@ Add Prerequisite Repositories
 	sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
 	sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://ftp.utexas.edu/mariadb/repo/10.3/ubuntu bionic main'
  
+ 
 Install Required Packages
 	apt-get update
 	apt-get install mariadb-server
 	
 CONTINUE HERE
 	# skipped:  php-pear
-	apt-get install apache2  cifs-utils samba libsasl2-modules postfix openjdk-11-jdk imagemagick git libssl-dev build-essential libpcre3-dev unzip apparmor-utils make dnsutils
+	apt-get install apache2 cpufrequtils cifs-utils samba libsasl2-modules postfix openjdk-11-jdk imagemagick git libssl-dev build-essential libpcre3-dev unzip apparmor-utils make dnsutils
 	timedatectl set-ntp on
 	timedatectl set-timezone America/New_York
 	  
@@ -228,6 +229,18 @@ CONTINUE HERE
 	apt-get install libapache2-mod-php7.3
 	
 	# accept defaults for all installers - when postfix installer prompts you, i.e. OK, Internet Site
+	
+	# force high performance from cpu:
+	echo 'GOVERNOR="performance"' | sudo tee /etc/default/cpufrequtils
+	systemctl disable ondemand
+	
+	# force it now before reboot:
+	for CPUFREQ in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do [ -f $CPUFREQ ] || continue; echo -n performance > $CPUFREQ; done
+	
+	cpupower frequency-set -d 3.2Ghz
+	
+	apt install linux-tools-common linux-tools-4.18.0-16-generic linux-cloud-tools-4.18.0-16-generic
+	cpupower frequency-info
 	
 Configure MariaDB
 	Important Note: Mariadb doesn't appear to work when the datadir is in a Virtualbox Shared Folder anymore.  For virtual machines where you want to separate the datadir, you must use a vdi file instead.
