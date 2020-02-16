@@ -214,6 +214,9 @@ Install Required Packages
 	apt-get update
 	apt-get install mariadb-server
 	
+	#disable a service that hangs virtualbox boot:
+		systemctl disable hv-kvp-daemon.service
+	
 CONTINUE HERE
 	# skipped:  php-pear
 	apt-get install apache2 cpufrequtils cifs-utils samba libsasl2-modules postfix openjdk-11-jdk imagemagick git libssl-dev build-essential libpcre3-dev unzip apparmor-utils make dnsutils
@@ -224,6 +227,11 @@ CONTINUE HERE
 	apt-get install php7.3-mysql php7.3-cli php7.3-gd php7.3-curl php7.3-dev php7.3-sqlite3 curl
 	
 	apt-get install php7.3-common php7.3-mbstring php7.3-imap php-imagick php7.3-fpm handbrake-gtk handbrake-cli rng-tools p7zip-full mailutils fail2ban opendkim opendkim-tools dnsmasq ffmpeg monit sshpass handbrake-cli
+	
+	apt-get install php7.4
+	apt-get install php7.4-mysql php7.4-cli php7.4-gd php7.4-curl php7.4-dev php7.4-sqlite3 curl
+	
+	apt-get install php7.4-common php7.4-mbstring php7.4-imap php-imagick php7.4-fpm handbrake-gtk handbrake-cli rng-tools p7zip-full mailutils fail2ban opendkim opendkim-tools dnsmasq ffmpeg monit sshpass handbrake-cli
 	
 	# if you want to use php with apache2, also run this:
 	apt-get install libapache2-mod-php7.3
@@ -730,6 +738,8 @@ Configure the variables in jetendo.ini manually
 	
 Make sure the jetendo.ini symbolic link is created:
 	ln -sfn /var/jetendo-server/system/php/jetendo.ini /etc/php/7.3/mods-available/jetendo.ini
+	ln -sfn /var/jetendo-server/system/php/jetendo.ini /etc/php/7.4/mods-available/jetendo.ini
+	apt-get install php7.4-mysql
 Enable the php configuration module:	
 	phpenmod jetendo
 	service php7.3-fpm restart

@@ -439,6 +439,16 @@ Install lucee
 		size 5M
 	}
 	
+	vi /etc/logrotate.d/nginx
+	/var/jetendo-server/nginx/logs/error.log {
+		copytruncate
+		daily
+		rotate 7
+		compress
+		missingok
+		size 5M
+	}
+	
 	vi /etc/logrotate.d/jetendo
 	/var/jetendo-server/jetendo/share/task-log/cfml-tasks.log {
 		su root www-data
