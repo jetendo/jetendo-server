@@ -81,6 +81,8 @@ sudo -i
 # force grub screen to NOT wait forever for keypress on failed boot:
 	vi /etc/default/grub
 		GRUB_RECORDFAIL_TIMEOUT=2
+		
+		also change GRUB_CMDLINE_LINUX="" to GRUB_CMDLINE_LINUX="panic=20"  so we can force a reboot on kernel hard failures
 	
 	# force ubuntu to boot after 2 second delay on grub menu
 		vi /etc/grub.d/00_header
@@ -207,14 +209,14 @@ Add Prerequisite Repositories
 		
 	# mariadb 10.3
 	sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
-	sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://ftp.utexas.edu/mariadb/repo/10.3/ubuntu bionic main'
+	sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.3/ubuntu bionic main'
  
  
 Install Required Packages
 	apt-get update
 	apt-get install mariadb-server
 	
-	#disable a service that hangs virtualbox boot:
+	#disable a service that hangs virtualbox and KVM boot for 1 minute and 30 seconds:
 		systemctl disable hv-kvp-daemon.service
 	
 CONTINUE HERE
@@ -222,29 +224,24 @@ CONTINUE HERE
 	apt-get install apache2 cpufrequtils cifs-utils samba libsasl2-modules postfix openjdk-11-jdk imagemagick git libssl-dev build-essential libpcre3-dev unzip apparmor-utils make dnsutils
 	timedatectl set-ntp on
 	timedatectl set-timezone America/New_York
-	  
-	apt-get install php7.3
-	apt-get install php7.3-mysql php7.3-cli php7.3-gd php7.3-curl php7.3-dev php7.3-sqlite3 curl
-	
-	apt-get install php7.3-common php7.3-mbstring php7.3-imap php-imagick php7.3-fpm handbrake-gtk handbrake-cli rng-tools p7zip-full mailutils fail2ban opendkim opendkim-tools dnsmasq ffmpeg monit sshpass handbrake-cli
 	
 	apt-get install php7.4
-	apt-get install php7.4-mysql php7.4-cli php7.4-gd php7.4-curl php7.4-dev php7.4-sqlite3 curl
-	
+	apt-get install php7.4-mysql php7.4-cli php7.4-gd php7.4-curl php7.4-dev php7.4-sqlite3 curl php7.4-xml
 	apt-get install php7.4-common php7.4-mbstring php7.4-imap php-imagick php7.4-fpm handbrake-gtk handbrake-cli rng-tools p7zip-full mailutils fail2ban opendkim opendkim-tools dnsmasq ffmpeg monit sshpass handbrake-cli
 	
 	# if you want to use php with apache2, also run this:
-	apt-get install libapache2-mod-php7.3
+	apt-get install libapache2-mod-php7.4
 	
 	# accept defaults for all installers - when postfix installer prompts you, i.e. OK, Internet Site
 	
-	# force high performance from cpu:
+	# not important: force high performance from cpu:
 	echo 'GOVERNOR="performance"' | sudo tee /etc/default/cpufrequtils
 	systemctl disable ondemand
 	
-	# force it now before reboot:
+	# not important: force it now before reboot:
 	for CPUFREQ in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do [ -f $CPUFREQ ] || continue; echo -n performance > $CPUFREQ; done
 	
+	# not important:  adjust number to match your cpu
 	cpupower frequency-set -d 3.2Ghz
 	
 	apt install linux-tools-common linux-tools-4.18.0-16-generic linux-cloud-tools-4.18.0-16-generic
@@ -310,9 +307,9 @@ Imagemagick 6.9 is the default, but we might need Imagemagick 7, which requires 
 Install OpenSSL 1.1.1+ for TLS 1.3 and more
 	mkdir /root/openssltemp
 	cd /root/openssltemp
-	wget https://www.openssl.org/source/openssl-1.1.1b.tar.gz
-	tar xvf openssl-1.1.1b.tar.gz
-	cd openssl-1.1.1b
+	wget https://www.openssl.org/source/openssl-1.1.1g.tar.gz
+	tar xvf openssl-1.1.1g.tar.gz
+	cd openssl-1.1.1g
 	./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl -Wl,-rpath,/usr/local/ssl/lib
 	make
 	make install
@@ -325,8 +322,8 @@ Install Required Software From Source
 	Nginx
 		mkdir /root/nginx-build
 		cd /root/nginx-build
-		wget http://nginx.org/download/nginx-1.15.9.tar.gz
-		tar xvfz nginx-1.15.9.tar.gz
+		wget http://nginx.org/download/nginx-1.19.2.tar.gz
+		tar xvfz nginx-1.19.2.tar.gz
 		adduser --system --no-create-home --disabled-login --disabled-password --group nginx
 		
 		Put "sendfile off;" in nginx.conf on test server when using virtualbox shared folders
@@ -409,12 +406,12 @@ Install Required Software From Source
 			sudo make install
 			
 			
-		cd /root/nginx-build/nginx-1.15.9/
-		./configure --with-openssl=/root/openssltemp/openssl-1.1.1b --with-openssl-opt=enable-tls1_3 --with-http_realip_module  --with-http_v2_module --prefix=/var/jetendo-server/nginx --user=nginx --group=nginx --with-http_ssl_module --with-http_gzip_static_module  --with-http_flv_module --with-http_mp4_module --with-http_stub_status_module --add-module=/root/nginx-build/nginx-upload-module-master  --add-module=/root/nginx-build/ngx_devel_kit-master --add-module=/root/nginx-build/set-misc-nginx-module-master
+		cd /root/nginx-build/nginx-1.19.2/
+		./configure --with-openssl=/root/openssltemp/openssl-1.1.1g --with-openssl-opt=enable-tls1_3 --with-http_realip_module  --with-http_v2_module --prefix=/var/jetendo-server/nginx --user=nginx --group=nginx --with-http_ssl_module --with-http_gzip_static_module  --with-http_flv_module --with-http_mp4_module --with-http_stub_status_module --add-module=/root/nginx-build/nginx-upload-module-master  --add-module=/root/nginx-build/ngx_devel_kit-master --add-module=/root/nginx-build/set-misc-nginx-module-master
 
-#disabled clojure for now		--add-module=/root/nginx-build/nginx-clojure-master/src/c
+		#disabled clojure for now		--add-module=/root/nginx-build/nginx-clojure-master/src/c
 		
-		make  - stopped here
+		make
 		make install
 		cd /var/jetendo-server/nginx
 		mkdir cache client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp ssl upload_temp
@@ -445,9 +442,9 @@ Install lucee
 		mkdir /var/jetendo-server/system/apr-build/
 		cd /var/jetendo-server/system/apr-build/
 		# get the newest apr unix gz here: http://apr.apache.org/download.cgi
-		wget http://apache.mirrors.ionfish.org//apr/apr-1.6.5.tar.gz
-		tar -xvf apr-1.6.5.tar.gz
-		cd apr-1.6.5
+		wget http://apache.mirrors.ionfish.org/apr/apr-1.7.0.tar.gz
+		tar -xvf apr-1.7.0.tar.gz
+		cd apr-1.7.0
 		./configure
 		make && make install
 	Compile and Install Tomcat Native Library
@@ -456,10 +453,10 @@ Install lucee
 		export JAVA_HOME=/var/jetendo-server/lucee/jdk/jre/
 		cd /var/jetendo-server/system/apr-build/
 		# get the newest tomcat native library source here: http://tomcat.apache.org/download-native.cgi
-		wget http://www.trieuvan.com/apache/tomcat/tomcat-connectors/native/1.2.21/source/tomcat-native-1.2.21-src.tar.gz
-		tar -xvzf tomcat-native-1.2.21-src.tar.gz
-		cd tomcat-native-1.2.21-src/native/
-		./configure --with-apr=/usr/local/apr/bin/ --with-ssl=/root/openssltemp/openssl-1.1.1b
+		wget http://www.trieuvan.com/apache/tomcat/tomcat-connectors/native/1.2.24/source/tomcat-native-1.2.24-src.tar.gz
+		tar -xvzf tomcat-native-1.2.24-src.tar.gz
+		cd tomcat-native-1.2.24-src/native/
+		./configure --with-apr=/usr/local/apr/bin/ --with-ssl=/root/openssltemp/openssl-1.1.1g
 		make && make install
 		
 	Install lucee from newest tomcat x64 binary release on www.lucee.org
@@ -507,6 +504,9 @@ Install lucee
 		
 		note that we had sites that need [] in url, and the tomcat server.xml connectors had to have this attribute added to support that now:
 			relaxedQueryChars="[]"
+			
+		if i copy the lucee files instead of installing, to install the startup service, run this command:
+		update-rc.d lucee_ctl defaults
 		
 	SKIPPED: Optional: Install wildfly servlet only distribution with lucee
 		tutorial: https://www.howtoforge.com/tutorial/ubuntu-wildfly-jboss-installation/
@@ -608,13 +608,12 @@ WantedBy=multi-user.target
 			; A default value for the CURLOPT_CAINFO option. This is required to be an
 			; absolute path.
 			curl.cainfo ="/usr/local/share/ca-certificates/cacert.pem"
-		service php7.3-fpm restart
+		service php7.4-fpm restart
 		 
 		for tomcat 9 and java 10, use this command instead and say yes:
-			/usr/bin/keytool -import -keystore /usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts -trustcacerts -file /usr/local/share/ca-certificates/cacert.pem -storepass changeit
-			#below is probably not needed due to symlink, but its here just in case:
-			/usr/bin/keytool -import -keystore /var/jetendo-server/lucee/jdk/lib/security/cacerts -trustcacerts -file /usr/local/share/ca-certificates/cacert.pem -storepass changeit
+			/usr/bin/keytool -import -alias "mykey" -keystore /var/jetendo-server/lucee/jdk/jre/lib/security/cacerts -trustcacerts -file /usr/local/share/ca-certificates/cacert.pem -storepass changeit
 		
+			/usr/bin/keytool -delete -noprompt -alias "mykey" -keystore /var/jetendo-server/lucee/jdk/jre/lib/security/cacerts
 		 
 		
 		// replace server.xml and web.xml with the lucee ones which use the luceevhosts directory instead of lucee 
@@ -696,7 +695,7 @@ WantedBy=multi-user.target
 	}
 	
 	
-	service lucee_ctl start
+	service lucee_ctl restart
 	
 	http://dev.com.127.0.0.2.nip.io:8888/lucee/admin/web.cfm?action=resources.mappings
 	 
@@ -737,19 +736,17 @@ Configure the variables in jetendo.ini manually
 	/var/jetendo-server/system/php/jetendo.ini
 	
 Make sure the jetendo.ini symbolic link is created:
-	ln -sfn /var/jetendo-server/system/php/jetendo.ini /etc/php/7.3/mods-available/jetendo.ini
 	ln -sfn /var/jetendo-server/system/php/jetendo.ini /etc/php/7.4/mods-available/jetendo.ini
-	apt-get install php7.4-mysql
-Enable the php configuration module:	
+	Enable the php configuration module:	
 	phpenmod jetendo
-	service php7.3-fpm restart
+	service php7.4-fpm restart
 	
 # development server symbolic link configuration
 	ln -sfn /var/jetendo-server/system/nginx-conf/nginx-development.conf /var/jetendo-server/nginx/conf/nginx.conf
 	ln -sfn /var/jetendo-server/system/jetendo-sysctl-development.conf /etc/sysctl.d/jetendo-sysctl-development.conf
 	ln -sfn /var/jetendo-server/system/monit/jetendo-development.conf /etc/monit/conf.d/jetendo.conf
 	ln -sfn /var/jetendo-server/system/apache-conf/development-sites-enabled /etc/apache2/sites-enabled
-	ln -sfn /var/jetendo-server/system/php/development-pool /etc/php/7.3/fpm/pool.d
+	ln -sfn /var/jetendo-server/system/php/development-pool /etc/php/7.4/fpm/pool.d
 		
 	replace sa.your-company.com 3 times in /var/jetendo-server/system/monit/jetendo-development.conf with the jetendo server manager domain and change to https if you are using https 
 	
@@ -867,9 +864,9 @@ Enable hardware random number generator on non-virtual machine.  This is not saf
 		apt-get install haveged
 	
 manually download the latest 64-bit stable linux version of wkhtmltopdf on the website: http://wkhtmltopdf.org/downloads.html
-	wget https://downloads.wkhtmltopdf.org/0.12/0.12.5/wkhtmltox_0.12.5-1.bionic_amd64.deb
+	wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.bionic_amd64.deb
 	apt-get install xfonts-base xfonts-75dpi
-	dpkg -i /root/wkhtmltox_0.12.5-1.bionic_amd64.deb
+	dpkg -i /root/wkhtmltox_0.12.6-1.bionic_amd64.deb
 	
 	SKIPPED You can't use this because it depends on X server, and would run slower if we ran the virtual X server.
 		apt-get install wkhtmltopdf
