@@ -114,6 +114,13 @@ sudo -i
 		delete the password hash for root between the 2 colons so it appears like "root::" on the first line.
 	
 	service ssh restart
+	
+# make ssh not timeout so fast.
+
+/etc/ssh/sshd_config
+	TCPKeepAlive yes
+	ClientAliveInterval 600
+	ClientAliveCountMax 50
 
 # configure firewall	
 	# allow web traffic:
