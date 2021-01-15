@@ -234,7 +234,13 @@ CONTINUE HERE
 	
 	apt-get install php7.4
 	apt-get install php7.4-mysql php7.4-cli php7.4-gd php7.4-curl php7.4-dev php7.4-sqlite3 curl php7.4-xml
-	apt-get install php7.4-common php7.4-mbstring php7.4-imap php-imagick php7.4-fpm handbrake-gtk handbrake-cli rng-tools p7zip-full mailutils fail2ban opendkim opendkim-tools dnsmasq ffmpeg monit sshpass handbrake-cli
+	apt-get install php7.4-common php7.4-mbstring php7.4-imap php-imagick php7.4-fpm handbrake-gtk handbrake-cli rng-tools p7zip-full
+
+	# php 8 was needed on test server for CLI operations, but nginx and apparmor is not setup to use php8.0-fpm yet
+	
+	apt-get install php8.0 php8.0-mysql php8.0-cli php8.0-gd php8.0-curl php8.0-dev php8.0-sqlite3 curl php8.0-xml php8.0-common php8.0-mbstring php8.0-imap php-imagick php8.0-fpm handbrake-gtk handbrake-cli rng-tools p7zip-full 
+
+	mailutils fail2ban opendkim opendkim-tools dnsmasq ffmpeg monit sshpass handbrake-cli
 	
 	# if you want to use php with apache2, also run this:
 	apt-get install libapache2-mod-php7.4
