@@ -211,7 +211,7 @@ Add Prerequisite Repositories
 	# not sure what it was for
 	add-apt-repository "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) universe"
 	
-	# php 7.3
+	# php 7.4
 	add-apt-repository ppa:ondrej/php
 		
 	# mariadb 10.3
@@ -240,7 +240,7 @@ CONTINUE HERE
 	
 	apt-get install php8.0 php8.0-mysql php8.0-cli php8.0-gd php8.0-curl php8.0-dev php8.0-sqlite3 curl php8.0-xml php8.0-common php8.0-mbstring php8.0-imap php-imagick php8.0-fpm handbrake-gtk handbrake-cli rng-tools p7zip-full 
 
-	mailutils fail2ban opendkim opendkim-tools dnsmasq ffmpeg monit sshpass handbrake-cli
+	apt-get install mailutils fail2ban opendkim opendkim-tools dnsmasq ffmpeg monit sshpass handbrake-cli
 	
 	# if you want to use php with apache2, also run this:
 	apt-get install libapache2-mod-php7.4
@@ -447,7 +447,7 @@ Install Required Software From Source
 		audio/webm weba;
 		application/x-font-ttf             ttf;
 		font/opentype                      otf;
-		
+		text/x-scss										 scss;
 	
 	
 Install lucee
@@ -455,7 +455,7 @@ Install lucee
 		mkdir /var/jetendo-server/system/apr-build/
 		cd /var/jetendo-server/system/apr-build/
 		# get the newest apr unix gz here: http://apr.apache.org/download.cgi
-		wget http://apache.mirrors.ionfish.org/apr/apr-1.7.0.tar.gz
+		wget https://mirrors.ocf.berkeley.edu/apache//apr/apr-1.7.0.tar.gz
 		tar -xvf apr-1.7.0.tar.gz
 		cd apr-1.7.0
 		./configure
@@ -466,9 +466,9 @@ Install lucee
 		export JAVA_HOME=/var/jetendo-server/lucee/jdk/jre/
 		cd /var/jetendo-server/system/apr-build/
 		# get the newest tomcat native library source here: http://tomcat.apache.org/download-native.cgi
-		wget http://www.trieuvan.com/apache/tomcat/tomcat-connectors/native/1.2.24/source/tomcat-native-1.2.24-src.tar.gz
-		tar -xvzf tomcat-native-1.2.24-src.tar.gz
-		cd tomcat-native-1.2.24-src/native/
+		wget https://mirror.nodesdirect.com/apache/tomcat/tomcat-connectors/native/1.2.28/source/tomcat-native-1.2.28-src.tar.gz
+		tar -xvzf tomcat-native-1.2.28-src.tar.gz
+		cd tomcat-native-1.2.28-src/native/
 		./configure --with-apr=/usr/local/apr/bin/ --with-ssl=/root/openssltemp/openssl-1.1.1g
 		make && make install
 		
