@@ -1,7 +1,7 @@
 # Last Modified: Sat Aug 22 23:36:31 2015
 #include <tunables/global>
 
-/var/jetendo-server/lucee/jdk/jre/bin/java {
+/var/jetendo-server/lucee/jdk/jre/bin/java flags=(complain) {
   #include <abstractions/apache2-common>
   #include <abstractions/base>
   #include <abstractions/fonts>
@@ -46,8 +46,8 @@
   /var/jetendo-server/jetendo/sites rw,
   /var/jetendo-server/jetendo/sites-writable/ rw,
   /var/jetendo-server/jetendo/sites-writable/** rw,
-  /zbackup2/jetendo/sites-writable/ rw,
-  /zbackup2/jetendo/sites-writable/** rw,
+  /zbackup/jetendo/sites-writable/ rw,
+  /zbackup/jetendo/sites-writable/** rw,
   /var/jetendo-server/jetendo/sites/ r,
   /var/jetendo-server/jetendo/sites/** r,
   /var/jetendo-server/jetendo/sites/*/WEB-INF/ rw,
@@ -78,7 +78,5 @@
   /var/jetendo-server/luceevhosts/** rw,
   /zbackup/backup/ rw,
   /zbackup/backup/** rw,
-  /zbackup2/backup/ rw,
-  /zbackup2/backup/** rw,
 
 }

@@ -1,51 +1,50 @@
-# Last Modified: Sat Jan 18 01:51:12 2014
+# Last Modified: Fri Jun  4 16:47:52 2021
 #include <tunables/global>
 
-/var/jetendo-server/nginx/sbin/nginx {
+/var/jetendo-server/nginx/sbin/nginx flags=(complain) {
   #include <abstractions/base>
   #include <abstractions/nameservice>
-  #include <abstractions/nis> 
+  #include <abstractions/nis>
 
+  capability chown,
   capability dac_override,
+  capability dac_read_search,
   capability net_bind_service,
-  capability sys_resource,
   capability setgid,
   capability setuid,
-  capability chown,
+  capability sys_resource,
 
   /etc/ssl/openssl.cnf r,
+  /run/nginx.pid rw,
+  /run/nginx.pid.oldbin w,
+  /run/php/php7.3-fpm.sock rw,
+  /usr/local/lib/libz.so.* mr,
   /var/jetendo-server/jetendo/public/** r,
   /var/jetendo-server/jetendo/share/** r,
   /var/jetendo-server/jetendo/share/mls-images-temp/** r,
-  /var/jetendo-server/jetendo/sites/** r,
   /var/jetendo-server/jetendo/sites-writable/** r,
-  /zbackup2/jetendo/sites-writable/** r,
+  /var/jetendo-server/jetendo/sites/** r,
   /var/jetendo-server/jetendo/themes/** r,
+  /var/jetendo-server/nginx/cache rw,
+  /var/jetendo-server/nginx/cache/ rw,
+  /var/jetendo-server/nginx/cache/** rw,
   /var/jetendo-server/nginx/client_body_temp/** rw,
   /var/jetendo-server/nginx/conf/** r,
+  /var/jetendo-server/nginx/conf/sites/jetendo/** r,
   /var/jetendo-server/nginx/fastcgi_temp/** rw,
+  /var/jetendo-server/nginx/html/** r,
   /var/jetendo-server/nginx/logs/** rw,
   /var/jetendo-server/nginx/off w,
   /var/jetendo-server/nginx/on w,
   /var/jetendo-server/nginx/proxy_temp/** rw,
   /var/jetendo-server/nginx/sbin/nginx mr,
   /var/jetendo-server/nginx/scgi_temp/** rw,
-  /var/jetendo-server/nginx/ssl/** r,
-  /var/jetendo-server/nginx/uwscgi_temp/** rw,
-  /zbackup/jetendo/share/mls-images/** r,
-  /zbackup3/jetendo/share/mls-images/** r,
-  /var/jetendo-server/system/nginx-conf/** r,
   /var/jetendo-server/nginx/sites/ r,
   /var/jetendo-server/nginx/sites/** r,
-  /var/jetendo-server/nginx/cache rw,
-  /var/jetendo-server/nginx/cache/ rw,
-  /var/jetendo-server/nginx/cache/** rw,
-  /var/jetendo-server/nginx/conf/sites/jetendo/** r,
-  /var/jetendo-server/nginx/html/** r,
-    /run/nginx.pid rw,
-    /run/nginx.pid.oldbin w,
-    /run/php/php7.3-fpm.sock rw,
-    /var/run/php/php7.3-fpm.sock rw, 
-	/usr/local/lib/libz.so.* mr,
+  /var/jetendo-server/nginx/ssl/** r,
+  /var/jetendo-server/nginx/uwscgi_temp/** rw,
+  /var/jetendo-server/system/nginx-conf/** r,
+  /zbackup/jetendo/share/mls-images/** r,
+  /zbackup/jetendo/sites-writable/** r,
 
 }
