@@ -786,6 +786,9 @@ chmod +x /etc/init.d/nginx
 		cp -f /var/jetendo-server/system/apparmor.d/production/* /etc/apparmor.d/
 		apparmor_parser -r /etc/apparmor.d/
 	
+	to find new problems
+	aa-logprof
+	
 	configure the profiles to be specific to your application by editing them in /etc/apparmor.d/ directly.
 	
 # generate self-signed ssl certs for development
